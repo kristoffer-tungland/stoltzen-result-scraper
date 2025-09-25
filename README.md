@@ -107,8 +107,9 @@ stoltzen-result-scraper/
 ├── run_scraper.bat           # Standard Windows batch med feilhåndtering
 ├── run_scraper_advanced.bat  # Avansert Windows batch med meny
 ├── update_requirements.bat   # Automatisk requirements.txt oppdatering
-├── results.json              # Siste kjørte resultater
-└── README.md                 # Denne filen
+├── .gitignore                # Git ignore-regler
+├── results.json              # Siste kjørte resultater (ikke i Git)
+└── README.md                 # Denna filen
 ```
 
 ## Nye funksjoner
@@ -119,6 +120,7 @@ stoltzen-result-scraper/
 - **URL-argument**: Fleksibel URL-input for ulike resultatsider
 - **Forbedret kategorisering**: Mann/Dame/Pluss i stedet for Menn/Kvinner/Pluss 90kg
 - **Sortering**: Deltakere sorteres etter beste tid (raskeste først) innenfor hver kategori
+- **Norske tegn**: Korrekt håndtering av æøå og andre nordiske bokstaver i UTF-8 format
 
 ## Ytelse
 
@@ -140,3 +142,11 @@ Hvis noen profiler mangler data:
 Hvis "NyBestetid" vises som `false` når det burde være `true`:
 - Sjekk at tidsformatene kan sammenlignes korrekt
 - Verifiser at "BesteÅr" er før 2024
+
+Hvis nordiske bokstaver vises feil:
+- Sørg für at JSON-filen åpnes med UTF-8 encoding
+- Scriptet håndterer automatisk encoding-problemer fra norske nettsider
+
+## Git og versjonskontroll
+
+Results.json-filer er ekskludert fra Git via `.gitignore` siden disse inneholder scrapet data som endrer seg ved hver kjøring. Dette holder repositoryet rent og fokusert på kildekoden.

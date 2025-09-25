@@ -23,7 +23,9 @@ class StoltzenScraper:
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept-Charset': 'utf-8'
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'nb-NO,nb;q=0.9,no;q=0.8,nn;q=0.7,en;q=0.6',
+            'Accept-Charset': 'utf-8,iso-8859-1;q=0.7'
         })
     
     def fetch_page(self, url: str) -> Optional[BeautifulSoup]:
@@ -31,11 +33,26 @@ class StoltzenScraper:
         try:
             response = self.session.get(url, timeout=10)
             response.raise_for_status()
-            # Force UTF-8 encoding to handle Norwegian characters
-            response.encoding = 'utf-8'
+            
+            # Handle Norwegian character encoding properly
+            if response.encoding is None or response.encoding.lower() in ['iso-8859-1', 'windows-1252']:
+                # Try common Norwegian encodings
+                for encoding in ['utf-8', 'iso-8859-1', 'windows-1252']:
+                    try:
+                        response.encoding = encoding
+                        content = response.text
+                        # Test if Norwegian characters decode properly
+                        if 'Ã¦' not in content and 'Ã¸' not in content and 'Ã¥' not in content:
+                            break
+                    except UnicodeDecodeError:
+                        continue
+                else:
+                    # Fallback to iso-8859-1 which is common for Norwegian sites
+                    response.encoding = 'iso-8859-1'
+            
             return BeautifulSoup(response.text, 'html.parser')
         except requests.RequestException as e:
-            print(f"Error fetching {url}: {e}")
+            print(f"Error fetching {url}: {e}", file=sys.stderr)
             return None
     
     def parse_time(self, time_str: str) -> Optional[str]:
@@ -144,6 +161,10 @@ class StoltzenScraper:
                     current_category = "Mann"
                 
                 if name and len(name) > 1:  # Valid name
+                    # Fix Norwegian character encoding issues
+                    name = self.fix_norwegian_encoding(name)
+                    full_class = self.fix_norwegian_encoding(full_class)
+                    
                     participant = {
                         "Navn": name,
                         "Tid": self.parse_time(time_2024) or time_2024,
@@ -303,6 +324,29 @@ class StoltzenScraper:
         except:
             return None
     
+    def fix_norwegian_encoding(self, text: str) -> str:
+        """Fix common Norwegian character encoding issues."""
+        if not text:
+            return text
+        
+        # Common encoding fixes for Norwegian characters
+        replacements = {
+            'Ã¦': 'æ', 'Ã¦': 'æ',  # æ
+            'Ã¸': 'ø', 'Ã¸': 'ø',  # ø  
+            'Ã¥': 'å', 'Ã¥': 'å',  # å
+            'Ã': 'Æ',              # Æ
+            'Ã': 'Ø',              # Ø
+            'Ã': 'Å',              # Å
+            'Ã°': 'ð',                # ð (Icelandic, sometimes appears)
+            'Ã¶': 'ö',                # ö (Swedish/Finnish)
+            'Ã¤': 'ä',                # ä (Swedish/Finnish)
+        }
+        
+        for bad, good in replacements.items():
+            text = text.replace(bad, good)
+        
+        return text
+    
     def calculate_time_difference(self, current_time: Optional[str], best_previous: Optional[str]) -> Optional[str]:
         """Calculate the difference between current time and best previous time."""
         if not current_time or not best_previous:
@@ -403,9 +447,18 @@ def main():
     for category in processed_results:
         processed_results[category].sort(key=get_sort_key)
     
-    # Output JSON with proper encoding
+    # Output JSON with proper UTF-8 encoding for Norwegian characters
     json_output = json.dumps(processed_results, indent=2, ensure_ascii=False)
-    print(json_output.encode('utf-8').decode('utf-8'))
+    
+    # Ensure output is properly encoded for Norwegian characters
+    try:
+        # Try to configure stdout for UTF-8
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+        print(json_output)
+    except (AttributeError, UnicodeEncodeError):
+        # Fallback for older Python versions or encoding issues
+        print(json_output.encode('utf-8', errors='replace').decode('utf-8', errors='replace'))
 
 
 if __name__ == "__main__":

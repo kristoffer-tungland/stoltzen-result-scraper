@@ -1,0 +1,57 @@
+# Stoltzen Result Scraper - Git Ignore File
+
+# Results files - these contain scraped data and don't need to be in version control
+results.json
+results_*.json
+results_utf8.json
+results_corrected.json
+results_final.json
+
+# Backup files
+*_backup_*.json
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# IDE and editor files
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+temp_*
+*_temp.*
+
+# Log files
+*.log
+error.log
+scraper_error.log
+
+# Test files
+test_results.json
+test_*.json
