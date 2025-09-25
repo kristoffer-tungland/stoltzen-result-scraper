@@ -69,7 +69,7 @@ python stoltzen_scraper.py --help
 {
   "Mann": [
     {
-      "Navn": "Ole Eirik Foshaugen",
+      "Navn": "Ola Nordman",
       "Tid": "11:12",
       "Klasse": "Menn 35-39 år",
       "Deltagelser": 3,
