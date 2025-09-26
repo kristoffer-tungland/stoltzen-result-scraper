@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stoltzen Resultater - Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .main-content {
+            display: flex;
+            min-height: calc(100vh - 100px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 2px solid #e9ecef;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-section {
+            margin-bottom: 25px;
+        }
+
+        .filter-section h3 {
+            font-size: 1.1em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        input, select {
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 10px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 3px;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.3s ease;
+        }
+
+        th:hover {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        }
+
+        th.sortable::after {
+            content: ' ↕️';
+            opacity: 0.5;
+        }
+
+        th.sort-asc::after {
+            content: ' ▲';
+            opacity: 1;
+        }
+
+        th.sort-desc::after {
+            content: ' ▼';
+            opacity: 1;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.2s ease;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .gruppe-dame {
+            border-left: 4px solid #e91e63;
+        }
+
+        .gruppe-mann {
+            border-left: 4px solid #2196f3;
+        }
+
+        .gruppe-pluss {
+            border-left: 4px solid #ff9800;
+        }
+
+        .ny-bestetid {
+            background: #d4edda;
+            color: #155724;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .differanse-positiv {
+            color: #dc3545;
+        }
+
+        .differanse-negativ {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid #e9ecef;
+                padding: 15px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+
+            th, td {
+                padding: 8px 6px;
+                font-size: 0.9em;
+            }
+
+            .table-container {
+                padding: 10px;
+            }
+        }
+
+        .clear-filters {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s ease;
+        }
+
+        .clear-filters:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏃‍♂️ Stoltzen Resultater</h1>
+            <p>Stoltzekleiven Opp - Resultatvisning</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="filter-section">
+                    <h3>� Last CSV-data</h3>
+                    
+                    <div class="filter-group">
+                        <div id="dropArea" style="border: 2px dashed #3498db; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 10px; background: #f8f9fa; cursor: pointer;">
+                            <p style="margin: 0; color: #3498db; font-weight: bold;">📁 Dra og slipp CSV-fil her</p>
+                            <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #6c757d;">eller klikk for å velge fil</p>
+                        </div>
+                        <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <h3>�🔍 Filtre</h3>
+                    
+                    <div class="filter-group">
+                        <label for="searchName">Søk navn:</label>
+                        <input type="text" id="searchName" placeholder="Skriv navn...">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filterGroup">Gruppe:</label>
+                        <select id="filterGroup">
+                            <option value="">Alle grupper</option>
+                            <option value="Dame">Dame</option>
+                            <option value="Mann">Mann</option>
+                            <option value="Pluss">Pluss</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filterClass">Klasse:</label>
+                        <select id="filterClass">
+                            <option value="">Alle klasser</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filterNewRecord">Ny bestetid:</label>
+                        <select id="filterNewRecord">
+                            <option value="">Alle</option>
+                            <option value="true">Kun nye bestetider</option>
+                            <option value="false">Ikke nye bestetider</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <button class="clear-filters" onclick="clearAllFilters()">Nullstill filtre</button>
+                    </div>
+                    
+
+                </div>
+
+                <div class="filter-section">
+                    <h3>📊 Statistikk</h3>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalCount">0</div>
+                            <div class="stat-label">Totalt</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="dameCount">0</div>
+                            <div class="stat-label">Dame</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="mannCount">0</div>
+                            <div class="stat-label">Mann</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="plussCount">0</div>
+                            <div class="stat-label">Pluss</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="newRecordCount">0</div>
+                            <div class="stat-label">Nye rekorder</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="table-container">
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="gruppe">Gruppe</th>
+                        <th class="sortable" data-sort="navn">Navn</th>
+                        <th class="sortable" data-sort="tid">Tid</th>
+                        <th class="sortable" data-sort="klasse">Klasse</th>
+                        <th class="sortable" data-sort="deltagelser">Deltagelser</th>
+                        <th class="sortable" data-sort="besteTidligere">Beste tidligere</th>
+                        <th class="sortable" data-sort="besteAar">Beste år</th>
+                        <th class="sortable" data-sort="nyBestetid">Ny bestetid</th>
+                        <th class="sortable" data-sort="differanse">Differanse</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results" style="display: none;">
+                Ingen resultater funnet med gjeldende filtre.
+            </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let originalData = [];
+        let filteredData = [];
+        let currentSort = { column: '', direction: 'asc' };
+
+        // Load CSV data from file input
+        function loadCSVFromFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    resolve(e.target.result);
+                };
+                reader.onerror = function(e) {
+                    reject(new Error('Failed to read file'));
+                };
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        // Try to load CSV using fetch (works with local server)
+        async function loadCSVData() {
+            try {
+                const response = await fetch('results.csv');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.text();
+            } catch (error) {
+                console.warn('Could not fetch results.csv via HTTP:', error.message);
+                throw error;
+            }
+        }
+
+
+
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].split(',');
+            
+            return lines.slice(1).map(line => {
+                const values = line.split(',');
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header.toLowerCase().replace('å', 'aa')] = values[index] || '';
+                });
+                return obj;
+            });
+        }
+
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return Infinity;
+            const parts = timeStr.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+
+        async function initializeData(csvData = null, source = 'unknown') {
+            // Show loading message
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 50px;">Laster data...</td></tr>';
+            
+            try {
+                let data = csvData;
+                
+                if (!data) {
+                    // Try to load via fetch
+                    try {
+                        data = await loadCSVData();
+                        source = 'results.csv (HTTP)';
+                    } catch (error) {
+                        console.warn('HTTP loading failed, no CSV data available');
+                        throw new Error('No CSV data available. Please use the file picker to load a CSV file.');
+                    }
+                }
+                
+                originalData = parseCSV(data);
+                filteredData = [...originalData];
+                
+                // Populate class dropdown
+                const classes = [...new Set(originalData.map(item => item.klasse))].filter(cls => cls.trim() !== '').sort();
+                const classSelect = document.getElementById('filterClass');
+                classSelect.innerHTML = '<option value="">Alle klasser</option>';
+                classes.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls;
+                    option.textContent = cls;
+                    classSelect.appendChild(option);
+                });
+                
+                updateDisplay();
+                setupEventListeners();
+                
+                console.log(`Loaded ${originalData.length} participants from ${source}`);
+                
+                // Update header to show data source
+                const headerP = document.querySelector('.header p');
+                if (originalData.length > 0) {
+                    headerP.textContent = `Stoltzekleiven Opp - ${originalData.length} deltakere (${source})`;
+                }
+                
+            } catch (error) {
+                console.error('Failed to initialize data:', error);
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 50px; color: red;">Feil ved lasting av data. Bruk filvelger for å laste CSV-fil.</td></tr>';
+            }
+        }
+
+
+
+
+
+        function setupEventListeners() {
+            document.getElementById('searchName').addEventListener('input', applyFilters);
+            document.getElementById('filterGroup').addEventListener('change', applyFilters);
+            document.getElementById('filterClass').addEventListener('change', applyFilters);
+            document.getElementById('filterNewRecord').addEventListener('change', applyFilters);
+            
+            // Sort functionality
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.addEventListener('click', () => sortTable(th.dataset.sort));
+            });
+        }
+
+        function applyFilters() {
+            const nameFilter = document.getElementById('searchName').value.toLowerCase();
+            const groupFilter = document.getElementById('filterGroup').value;
+            const classFilter = document.getElementById('filterClass').value;
+            const newRecordFilter = document.getElementById('filterNewRecord').value;
+            
+            filteredData = originalData.filter(item => {
+                const matchesName = item.navn.toLowerCase().includes(nameFilter);
+                const matchesGroup = !groupFilter || item.gruppe === groupFilter;
+                const matchesClass = !classFilter || item.klasse === classFilter;
+                const matchesNewRecord = !newRecordFilter || 
+                    (newRecordFilter === 'true' && item.nybestetid === 'True') ||
+                    (newRecordFilter === 'false' && item.nybestetid === 'False');
+                
+                return matchesName && matchesGroup && matchesClass && matchesNewRecord;
+            });
+            
+            updateDisplay();
+        }
+
+        function sortTable(column) {
+            const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+            currentSort = { column, direction };
+            
+            // Update header indicators
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            document.querySelector(`th[data-sort="${column}"]`).classList.add(`sort-${direction}`);
+            
+            filteredData.sort((a, b) => {
+                let aVal = a[column] || '';
+                let bVal = b[column] || '';
+                
+                // Special handling for time columns
+                if (column === 'tid' || column === 'bestetidligere') {
+                    aVal = timeToMinutes(aVal);
+                    bVal = timeToMinutes(bVal);
+                } else if (column === 'deltagelser' || column === 'besteaar') {
+                    aVal = parseInt(aVal) || 0;
+                    bVal = parseInt(bVal) || 0;
+                } else if (column === 'nybestetid') {
+                    aVal = aVal === 'True' ? 1 : 0;
+                    bVal = bVal === 'True' ? 1 : 0;
+                } else {
+                    aVal = aVal.toString().toLowerCase();
+                    bVal = bVal.toString().toLowerCase();
+                }
+                
+                if (direction === 'asc') {
+                    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                } else {
+                    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+                }
+            });
+            
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            updateTable();
+            updateStats();
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            const noResults = document.getElementById('noResults');
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            noResults.style.display = 'none';
+            
+            tbody.innerHTML = filteredData.map(item => {
+                const groupClass = `gruppe-${item.gruppe ? item.gruppe.toLowerCase() : 'unknown'}`;
+                const newRecordText = item.nybestetid === 'True' ? 
+                    '<span class="ny-bestetid">✓ Ny rekord</span>' : 
+                    (item.nybestetid === 'False' ? 'Nei' : '');
+                
+                const differanse = item.differanse || '';
+                const differanseClass = differanse.startsWith && differanse.startsWith('-') ? 'differanse-negativ' : 'differanse-positiv';
+                
+                return `
+                    <tr class="${groupClass}">
+                        <td><strong>${item.gruppe || '-'}</strong></td>
+                        <td><strong>${item.navn || '-'}</strong></td>
+                        <td><strong>${item.tid || '-'}</strong></td>
+                        <td>${item.klasse || '-'}</td>
+                        <td>${item.deltagelser || '-'}</td>
+                        <td>${item.bestetidligere || '-'}</td>
+                        <td>${item.besteaar || '-'}</td>
+                        <td>${newRecordText}</td>
+                        <td class="${differanseClass}"><strong>${differanse || '-'}</strong></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const total = filteredData.length;
+            const dame = filteredData.filter(item => item.gruppe === 'Dame').length;
+            const mann = filteredData.filter(item => item.gruppe === 'Mann').length;
+            const pluss = filteredData.filter(item => item.gruppe === 'Pluss').length;
+            const newRecords = filteredData.filter(item => item.nybestetid === 'True').length;
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('dameCount').textContent = dame;
+            document.getElementById('mannCount').textContent = mann;
+            document.getElementById('plussCount').textContent = pluss;
+            document.getElementById('newRecordCount').textContent = newRecords;
+        }
+
+        function clearAllFilters() {
+            document.getElementById('searchName').value = '';
+            document.getElementById('filterGroup').value = '';
+            document.getElementById('filterClass').value = '';
+            document.getElementById('filterNewRecord').value = '';
+            
+            // Clear sorting
+            currentSort = { column: '', direction: 'asc' };
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            
+            filteredData = [...originalData];
+            updateDisplay();
+        }
+
+
+
+        // Setup drag and drop functionality
+        function setupDragAndDrop() {
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('csvFileInput');
+            
+            // Make drop area clickable
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // Handle file selection
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    await loadFile(file);
+                }
+            });
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop area when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight(e) {
+                dropArea.style.backgroundColor = '#e3f2fd';
+                dropArea.style.borderColor = '#2196f3';
+            }
+            
+            function unhighlight(e) {
+                dropArea.style.backgroundColor = '#f8f9fa';
+                dropArea.style.borderColor = '#3498db';
+            }
+            
+            async function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0) {
+                    await loadFile(files[0]);
+                }
+            }
+            
+            async function loadFile(file) {
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    alert('Vennligst velg en CSV-fil (.csv)');
+                    return;
+                }
+                
+                try {
+                    const csvData = await loadCSVFromFile(file);
+                    await initializeData(csvData, file.name);
+                    clearAllFilters();
+                } catch (error) {
+                    console.error('Failed to load file:', error);
+                    alert('Feil ved lasting av fil: ' + error.message);
+                }
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDragAndDrop();
+            initializeData().catch(error => {
+                console.error('Initialization failed:', error);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -8,6 +8,7 @@ and outputs structured JSON with participant profiles including historical data.
 
 import re
 import json
+import csv
 import requests
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -390,6 +391,7 @@ def main():
     # Fetch the main results page
     url = args.url
     print(f"Fetching results from: {url}", file=sys.stderr)
+    print(f"Output will be saved to: results.csv", file=sys.stderr)
     
     soup = scraper.fetch_page(url)
     if not soup:
@@ -435,32 +437,73 @@ def main():
                 original_participant.pop("ProfileLink", None)
                 processed_results[category].append(original_participant)
     
-    # Sort results by best time within each category
+    # Combine all participants into a single list with group information
+    all_participants = []
+    
+    for category, participants in processed_results.items():
+        for participant in participants:
+            participant_with_group = participant.copy()
+            participant_with_group['Gruppe'] = category
+            all_participants.append(participant_with_group)
+    
+    # Sort by group (Dame, Mann, Pluss) and then by time
     def get_sort_key(participant):
-        # Use current time for sorting, convert to seconds for proper comparison
+        # Group priority: Dame=1, Mann=2, Pluss=3
+        group_priority = {'Dame': 1, 'Mann': 2, 'Pluss': 3}
+        group_order = group_priority.get(participant.get('Gruppe'), 4)
+        
+        # Time sorting (convert to seconds for proper comparison)
         current_time = participant.get("Tid")
+        time_seconds = float('inf')  # Default for invalid times
         if current_time:
             time_seconds = scraper.time_to_seconds(current_time)
-            return time_seconds if time_seconds is not None else float('inf')
-        return float('inf')
+            if time_seconds is None:
+                time_seconds = float('inf')
+        
+        return (group_order, time_seconds)
     
-    for category in processed_results:
-        processed_results[category].sort(key=get_sort_key)
+    all_participants.sort(key=get_sort_key)
     
-    # Output JSON with proper UTF-8 encoding for Norwegian characters
-    json_output = json.dumps(processed_results, indent=2, ensure_ascii=False)
+    # Output to CSV file (save in current working directory)
+    csv_filename = 'results.csv'
     
-    # Ensure output is properly encoded for Norwegian characters
     try:
-        # Try to configure stdout for UTF-8
-        if hasattr(sys.stdout, 'reconfigure'):
-            sys.stdout.reconfigure(encoding='utf-8')
+        with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
+            if all_participants:
+                fieldnames = ['Gruppe', 'Navn', 'Tid', 'Klasse', 'Deltagelser', 'BesteTidligere', 'BesteÅr', 'NyBestetid', 'Differanse']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                
+                # Write header
+                writer.writeheader()
+                
+                # Write participant data
+                for participant in all_participants:
+                    # Remove ProfileLink if it exists (internal use only)
+                    row_data = {key: participant.get(key) for key in fieldnames}
+                    writer.writerow(row_data)
+                
+                print(f"Results saved to {csv_filename}")
+                print(f"Total participants: {len(all_participants)}")
+                
+                # Show summary by group
+                group_counts = {}
+                for participant in all_participants:
+                    group = participant.get('Gruppe')
+                    group_counts[group] = group_counts.get(group, 0) + 1
+                
+                print("\nGroup summary:")
+                for group in ['Dame', 'Mann', 'Pluss']:
+                    count = group_counts.get(group, 0)
+                    if count > 0:
+                        print(f"  {group}: {count} participants")
+            else:
+                print("No participants found to write to CSV")
+                
+    except Exception as e:
+        print(f"Error writing CSV file: {e}", file=sys.stderr)
+        # Fallback: print as JSON to stdout
+        json_output = json.dumps(processed_results, indent=2, ensure_ascii=False)
         print(json_output)
-    except (AttributeError, UnicodeEncodeError):
-        # Fallback for older Python versions or encoding issues
-        print(json_output.encode('utf-8', errors='replace').decode('utf-8', errors='replace'))
-
-
 if __name__ == "__main__":
     try:
         main()

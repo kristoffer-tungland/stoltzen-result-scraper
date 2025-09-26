@@ -1,8 +1,8 @@
 @echo off
-REM Stoltzen Result Scraper - Batch Script
-REM This script runs the Python scraper with default settings
+REM Stoltzen Stat URL Scraper - Batch Script
+REM This script runs the Python scraper with stat.php URLs from a file
 
-echo Starting Stoltzen Result Scraper...
+echo Starting Stoltzen Stat URL Scraper...
 echo.
 
 REM Check if Python is available
@@ -27,25 +27,38 @@ if errorlevel 1 (
     pip install -r src\requirements.txt
 )
 
-REM Ask user for URL
-set "DEFAULT_URL=http://stoltzen.no/resultater/2024/resklubb_16.html"
-echo Default URL: %DEFAULT_URL%
+REM Ask user for URL file
+set "DEFAULT_FILE=stat_urls.txt"
+echo Default URL file: %DEFAULT_FILE%
 echo.
-set /p "USER_URL=Enter results URL (or press Enter for default): "
+set /p "USER_FILE=Enter URL file path (or press Enter for default): "
 
 REM Use default if no input provided
-if "%USER_URL%"=="" (
-    set "URL=%DEFAULT_URL%"
+if "%USER_FILE%"=="" (
+    set "URL_FILE=%DEFAULT_FILE%"
 ) else (
-    set "URL=%USER_URL%"
+    set "URL_FILE=%USER_FILE%"
+)
+
+REM Check if URL file exists
+if not exist "%URL_FILE%" (
+    echo Error: URL file "%URL_FILE%" not found
+    echo.
+    echo Please create a text file with stat.php URLs, one per line.
+    echo Example content:
+    echo   http://stoltzen.no/statistikk/stat.php?id=68772
+    echo   http://stoltzen.no/statistikk/stat.php?id=12345
+    echo.
+    pause
+    exit /b 1
 )
 
 REM Run the Python script
 echo.
-echo Fetching results from: %URL%
+echo Using URL file: %URL_FILE%
 echo.
-echo Running scraper...
-python src\stoltzen_scraper.py "%URL%" 2>error.log
+echo Running stat URL scraper...
+python src\stoltzen_stat_scraper.py "%URL_FILE%" --output results.csv 2>error.log
 
 REM Check if the script ran successfully
 if errorlevel 1 (

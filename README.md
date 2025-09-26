@@ -7,8 +7,8 @@ Et Python-script som henter og parser løpsresultater fra Stoltzekleiven Opp 202
 Scriptet:
 1. Henter HTML fra en spesifisert URL (sendes som argument)
 2. Parser resultat-tabellen og kategoriserer deltakerne i:
-   - **Mann**
-   - **Dame** 
+   - **Dame**
+   - **Mann** 
    - **Pluss**
 3. For hver deltaker henter den profil-informasjon fra `http://stoltzen.no/statistikk/stat.php?id=XXXXX`
 4. Ekstraherer historisk data inkludert:
@@ -16,7 +16,7 @@ Scriptet:
    - Beste tidligere tid (før 2024)
    - År for beste tidligere tid
    - Om årets tid er en ny personlig rekord
-5. Skriver ut strukturert JSON til stdout
+5. Skriver resultater til en CSV-fil (`results.csv`) sortert etter gruppe og tid
 
 ## Installasjon
 
@@ -34,11 +34,14 @@ pip install -r requirements.txt
 ### Windows Batch Scripts (Anbefalt)
 
 ```cmd
-# Enkel kjøring - kjører automatisk og åpner resultatet
+# Enkel kjøring - spør om URL og åpner resultatet
 quick_run.bat
 
-# Standard kjøring med feilhåndtering
+# Standard kjøring med URL-input og feilhåndtering
 run_scraper.bat
+
+# Alternativ scraper - bruker liste med stat.php URLs
+run_stat_scraper.bat
 
 # Avansert meny med flere alternativer
 run_scraper_advanced.bat
@@ -47,42 +50,98 @@ run_scraper_advanced.bat
 update_requirements.bat
 ```
 
+### URL-input
+
+Alle batch scripts spør nå om URL-en til resultatsiden:
+- **Standard URL**: `http://stoltzen.no/resultater/2024/resklubb_16.html` (Cowi 2024)
+- **Custom URL**: Skriv inn egen URL for andre klubber eller år
+- **Tom input**: Trykk Enter for å bruke standard URL
+
+### Alternativ metode: Stat URL Scraper
+
+I tillegg til hovedscriptet som scraper resultatsider, finnes det en alternativ metode som henter data direkte fra individuelle deltakerprofiler:
+
+**Oppsett:**
+1. Opprett en tekstfil med stat.php URLer (en per linje)
+2. Kjør `run_stat_scraper.bat` eller Python-scriptet direkte
+
+**URL-fil format (`src/stat_urls.txt`):**
+```
+# Kommentarer starter med #
+http://stoltzen.no/statistikk/stat.php?id=68772
+http://stoltzen.no/statistikk/stat.php?id=12345
+http://stoltzen.no/statistikk/stat.php?id=67890
+```
+
+**Fordeler:**
+- Kan hente spesifikke deltakere du er interessert i
+- Fungerer selv om resultatsiden ikke er tilgjengelig
+- Samme CSV-output som hovedscriptet
+- Raskere for få deltakere (unngår å parse hele resultatsiden)
+
+**Bruksområder:**
+- Følge med på spesifikke venner/kolleger
+- Sammenligne historisk utvikling for utvalgte løpere
+- Backup-metode når resultatsider er utilgjengelige
+
+### HTML Resultatvisning
+
+`results_viewer.html` er en interaktiv webside som automatisk laster data fra `results.csv`:
+
+**Funksjoner:**
+- **Fleksibel filinnlasting**: Drag-and-drop eller filvelger for CSV-filer
+- **Automatisk prøving**: Forsøker å laste `results.csv` automatisk
+- **Komplett filtrering**: Søk, gruppe, klasse og ny bestetid filtre
+- **Sortering**: Klikk på kolonneheader for å sortere
+- **Responsivt design**: Fungerer på desktop og mobil
+- **Statistikk**: Live oppdatering av tall basert på filtre
+- **CORS-sikker**: Fungerer når åpnet som lokal fil
+
+**Bruk:**
+1. Kjør en av scraperne for å generere `results.csv`
+2. Åpne `results_viewer.html` i nettleseren
+3. **Metode 1**: Dra og slipp `results.csv` på dropområdet
+4. **Metode 2**: Klikk på dropområdet og velg CSV-fil
+5. **Metode 3**: Klikk "🔄 Prøv å last results.csv" (fungerer kun med lokal server)
+
 ### Direkte Python-kommandoer
 
 ```bash
-# Kjør scriptet med URL som argument
-python stoltzen_scraper.py "http://stoltzen.no/resultater/2024/resklubb_16.html"
+# Hovedscript - kjør med URL som argument (genererer results.csv)
+python src/stoltzen_scraper.py \"http://stoltzen.no/resultater/2024/resklubb_16.html\"
 
-# Lagre resultater til fil
-python stoltzen_scraper.py "http://stoltzen.no/resultater/2024/resklubb_16.html" > results.json
+# Alternativ scraper - kjør med URL-fil
+python src/stoltzen_stat_scraper.py \"src/stat_urls.txt\"
 
-# Kun JSON-output (skjul progresinfo)
-python stoltzen_scraper.py "http://stoltzen.no/resultater/2024/resklubb_16.html" 2>nul
+# Skjul progresinfo (kun vis hovedutskrift)
+python src/stoltzen_scraper.py \"http://stoltzen.no/resultater/2024/resklubb_16.html\" 2>nul
 
 # Vis hjelp
-python stoltzen_scraper.py --help
+python src/stoltzen_scraper.py --help
+python src/stoltzen_stat_scraper.py --help
 ```
 
-## JSON-struktur
+## CSV-struktur
 
-```json
-{
-  "Mann": [
-    {
-      "Navn": "Ola Nordman",
-      "Tid": "11:12",
-      "Klasse": "Menn 35-39 år",
-      "Deltagelser": 3,
-      "BesteTidligere": "11:29",
-      "BesteÅr": 2023,
-      "NyBestetid": true,
-      "Differanse": "-0:17"
-    }
-  ],
-  "Dame": [...],
-  "Pluss": [...]
-}
+Resultatet lagres i `results.csv` med følgende kolonner sortert etter gruppe (Dame, Mann, Pluss) og tid (beste først):
+
+```csv
+Gruppe,Navn,Tid,Klasse,Deltagelser,BesteTidligere,BesteÅr,NyBestetid,Differanse
+Dame,Ingvild Erdal,11:58,Kvinner 18-34 år,3,12:30,2023,True,-0:32
+Mann,Ole Eirik Foshaugen,11:12,Menn 35-39 år,3,11:29,2023,True,-0:17
+Pluss,Jon Laurits Strand,13:52,Pluss 90kg,4,13:37,2022,False,+0:15
 ```
+
+**Kolonneforklaring:**
+- **Gruppe**: Dame, Mann eller Pluss
+- **Navn**: Deltakerens navn
+- **Tid**: Årets løpstid
+- **Klasse**: Aldersklasse/kategori
+- **Deltagelser**: Totalt antall deltagelser
+- **BesteTidligere**: Beste tidligere tid (før 2024)
+- **BesteÅr**: År for beste tidligere tid
+- **NyBestetid**: True hvis årets tid er ny personlig rekord
+- **Differanse**: Tidsdifferanse fra beste tidligere (+tregere, -raskere)
 
 ## Tekniske detaljer
 
@@ -90,7 +149,8 @@ python stoltzen_scraper.py --help
 - **Robust parsing**: Håndterer manglende data gracefully - setter til `null` hvis ikke funnet
 - **Tidsformat-parsing**: Normaliserer tidsformater fra "1:23:45" til "1:23:45" eller "23:45"
 - **Feilhåndtering**: Fortsetter selv om enkelte profiler ikke kan hentes
-- **Progress info**: Skriver progresinfo til stderr, JSON til stdout
+- **CSV Output**: Skriver resultater til `results.csv` fil med UTF-8 encoding
+- **Progress info**: Skriver progresinfo til stderr
 
 ## Avhengigheter
 
@@ -101,15 +161,20 @@ python stoltzen_scraper.py --help
 
 ```
 stoltzen-result-scraper/
-├── stoltzen_scraper.py        # Hovedscript
-├── requirements.txt           # Python-avhengigheter
-├── quick_run.bat             # Enkel Windows batch-kjøring
-├── run_scraper.bat           # Standard Windows batch med feilhåndtering
-├── run_scraper_advanced.bat  # Avansert Windows batch med meny
-├── update_requirements.bat   # Automatisk requirements.txt oppdatering
-├── .gitignore                # Git ignore-regler
-├── results.json              # Siste kjørte resultater (ikke i Git)
-└── README.md                 # Denna filen
+├── src/                              # Kildekode-mappe
+│   ├── stoltzen_scraper.py          # Hovedscript (scraper resultatsider)
+│   ├── stoltzen_stat_scraper.py     # Alternativt script (scraper stat URLs)
+│   ├── stat_urls.txt                # Eksempel URL-fil for stat scraper
+│   ├── requirements.txt             # Python-avhengigheter
+│   └── update_requirements.bat      # Automatisk requirements oppdatering
+├── quick_run.bat                    # Enkel Windows batch-kjøring
+├── run_scraper.bat                  # Standard Windows batch med feilhåndtering
+├── run_stat_scraper.bat             # Batch for stat URL scraper
+├── run_scraper_advanced.bat         # Avansert Windows batch med meny
+├── results_viewer.html              # HTML-visning av resultater (laster data fra results.csv)
+├── .gitignore                       # Git ignore-regler
+├── results.csv                      # Siste kjørte resultater (ikke i Git)
+└── README.md                        # Denna filen
 ```
 
 ## Nye funksjoner
@@ -119,7 +184,8 @@ stoltzen-result-scraper/
 - **Klasse**: Full klassebeskriving (f.eks. "Menn 35-39 år")
 - **URL-argument**: Fleksibel URL-input for ulike resultatsider
 - **Forbedret kategorisering**: Mann/Dame/Pluss i stedet for Menn/Kvinner/Pluss 90kg
-- **Sortering**: Deltakere sorteres etter beste tid (raskeste først) innenfor hver kategori
+- **Sortering**: Resultater sorteres først etter gruppe (Dame, Mann, Pluss) og deretter etter tid (beste tid først)
+- **CSV-format**: Strukturert CSV-fil med UTF-8 encoding for enkel bruk i Excel og andre verktøy
 - **Norske tegn**: Korrekt håndtering av æøå og andre nordiske bokstaver i UTF-8 format
 
 ## Ytelse
@@ -149,4 +215,4 @@ Hvis nordiske bokstaver vises feil:
 
 ## Git og versjonskontroll
 
-Results.json-filer er ekskludert fra Git via `.gitignore` siden disse inneholder scrapet data som endrer seg ved hver kjøring. Dette holder repositoryet rent og fokusert på kildekoden.
+Results.csv-filer er ekskludert fra Git via `.gitignore` siden disse inneholder scrapet data som endrer seg ved hver kjøring. Dette holder repositoryet rent og fokusert på kildekoden.

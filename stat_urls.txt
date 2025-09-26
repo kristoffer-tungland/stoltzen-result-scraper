@@ -1,0 +1,10 @@
+# Stoltzen Stat URLs
+# Format: http://stoltzen.no/statistikk/stat.php?id=XXXXX
+# Lines starting with # are comments and will be ignored
+
+# Test URL - Kristoffer Tungland (erstat med faktiske URLer)
+http://stoltzen.no/statistikk/stat.php?id=68772
+
+# Legg til flere URLer her, en per linje
+# http://stoltzen.no/statistikk/stat.php?id=12345
+# http://stoltzen.no/statistikk/stat.php?id=67890
