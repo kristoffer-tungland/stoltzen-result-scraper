@@ -267,6 +267,40 @@
         .clear-filters:hover {
             background: #5a6268;
         }
+
+        .live-status {
+            padding: 12px;
+            border-radius: 8px;
+            background: #e8f5e9;
+            color: #256029;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .live-status.error {
+            background: #ffebee;
+            color: #a32121;
+        }
+
+        .refresh-button {
+            width: 100%;
+            border: 0;
+            border-radius: 6px;
+            padding: 10px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        details.manual-upload {
+            margin-top: 14px;
+        }
+
+        details.manual-upload summary {
+            cursor: pointer;
+            color: #6c757d;
+        }
     </style>
 </head>
 <body>
@@ -279,15 +313,20 @@
         <div class="main-content">
             <div class="sidebar">
                 <div class="filter-section">
-                    <h3>� Last CSV-data</h3>
-                    
-                    <div class="filter-group">
-                        <div id="dropArea" style="border: 2px dashed #3498db; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 10px; background: #f8f9fa; cursor: pointer;">
-                            <p style="margin: 0; color: #3498db; font-weight: bold;">📁 Dra og slipp CSV-fil her</p>
-                            <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #6c757d;">eller klikk for å velge fil</p>
+                    <h3>🔄 Live-data</h3>
+                    <div id="liveStatus" class="live-status">Kobler til resultatserveren …</div>
+                    <button id="refreshNow" class="refresh-button" type="button">Oppdater nå</button>
+
+                    <details class="manual-upload">
+                        <summary>Last CSV-fil manuelt</summary>
+                        <div class="filter-group" style="margin-top: 10px;">
+                            <div id="dropArea" style="border: 2px dashed #3498db; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 10px; background: #f8f9fa; cursor: pointer;">
+                                <p style="margin: 0; color: #3498db; font-weight: bold;">📁 Dra og slipp CSV-fil her</p>
+                                <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #6c757d;">eller klikk for å velge fil</p>
+                            </div>
+                            <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
                         </div>
-                        <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
-                    </div>
+                    </details>
                 </div>
 
                 <div class="filter-section">
@@ -389,6 +428,10 @@
         let originalData = [];
         let filteredData = [];
         let currentSort = { column: '', direction: 'asc' };
+        let listenersInitialized = false;
+        let refreshInProgress = false;
+        let autoRefreshEnabled = true;
+        const AUTO_REFRESH_MS = 30000;
 
         // Load CSV data from file input
         function loadCSVFromFile(file) {
@@ -407,7 +450,7 @@
         // Try to load CSV using fetch (works with local server)
         async function loadCSVData() {
             try {
-                const response = await fetch('results.csv');
+                const response = await fetch(`results.csv?t=${Date.now()}`, { cache: 'no-store' });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -422,10 +465,10 @@
 
         function parseCSV(csv) {
             const lines = csv.trim().split('\n');
-            const headers = lines[0].split(',');
+            const headers = lines[0].replace(/\r$/, '').split(',');
             
             return lines.slice(1).map(line => {
-                const values = line.split(',');
+                const values = line.replace(/\r$/, '').split(',');
                 const obj = {};
                 headers.forEach((header, index) => {
                     obj[header.toLowerCase().replace('å', 'aa')] = values[index] || '';
@@ -459,7 +502,7 @@
                 }
                 
                 originalData = parseCSV(data);
-                filteredData = [...originalData];
+                const selectedClass = document.getElementById('filterClass').value;
                 
                 // Populate class dropdown
                 const classes = [...new Set(originalData.map(item => item.klasse))].filter(cls => cls.trim() !== '').sort();
@@ -471,9 +514,11 @@
                     option.textContent = cls;
                     classSelect.appendChild(option);
                 });
-                
-                updateDisplay();
-                setupEventListeners();
+                if (classes.includes(selectedClass)) {
+                    classSelect.value = selectedClass;
+                }
+
+                applyFilters();
                 
                 console.log(`Loaded ${originalData.length} participants from ${source}`);
                 
@@ -486,6 +531,7 @@
             } catch (error) {
                 console.error('Failed to initialize data:', error);
                 document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 50px; color: red;">Feil ved lasting av data. Bruk filvelger for å laste CSV-fil.</td></tr>';
+                throw error;
             }
         }
 
@@ -494,15 +540,43 @@
 
 
         function setupEventListeners() {
+            if (listenersInitialized) return;
+            listenersInitialized = true;
             document.getElementById('searchName').addEventListener('input', applyFilters);
             document.getElementById('filterGroup').addEventListener('change', applyFilters);
             document.getElementById('filterClass').addEventListener('change', applyFilters);
             document.getElementById('filterNewRecord').addEventListener('change', applyFilters);
+            document.getElementById('refreshNow').addEventListener('click', () => {
+                autoRefreshEnabled = true;
+                refreshLiveData();
+            });
             
             // Sort functionality
             document.querySelectorAll('th.sortable').forEach(th => {
                 th.addEventListener('click', () => sortTable(th.dataset.sort));
             });
+        }
+
+        function setLiveStatus(message, isError = false) {
+            const status = document.getElementById('liveStatus');
+            status.textContent = message;
+            status.classList.toggle('error', isError);
+        }
+
+        async function refreshLiveData() {
+            if (refreshInProgress || !autoRefreshEnabled) return;
+            refreshInProgress = true;
+            setLiveStatus('Henter siste resultater …');
+            try {
+                const csvData = await loadCSVData();
+                await initializeData(csvData, 'live');
+                const updated = new Date().toLocaleTimeString('nb-NO');
+                setLiveStatus(`Live · sist oppdatert ${updated} · automatisk hvert 30. sekund`);
+            } catch (error) {
+                setLiveStatus('Kunne ikke hente live-data. Kontroller at live-serveren kjører.', true);
+            } finally {
+                refreshInProgress = false;
+            }
         }
 
         function applyFilters() {
@@ -706,8 +780,10 @@
                 
                 try {
                     const csvData = await loadCSVFromFile(file);
+                    autoRefreshEnabled = false;
                     await initializeData(csvData, file.name);
                     clearAllFilters();
+                    setLiveStatus(`Manuell fil: ${file.name}. Klikk «Oppdater nå» for å gå tilbake til live-data.`);
                 } catch (error) {
                     console.error('Failed to load file:', error);
                     alert('Feil ved lasting av fil: ' + error.message);
@@ -718,9 +794,9 @@
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
             setupDragAndDrop();
-            initializeData().catch(error => {
-                console.error('Initialization failed:', error);
-            });
+            setupEventListeners();
+            refreshLiveData();
+            window.setInterval(refreshLiveData, AUTO_REFRESH_MS);
         });
     </script>
 </body>

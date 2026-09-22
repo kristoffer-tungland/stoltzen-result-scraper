@@ -266,28 +266,37 @@ def parse_history_html(html: str, current_year: int) -> Dict[str, Any]:
     soup = BeautifulSoup(html or "", "html.parser")
     candidates: List[Tuple[int, str]] = []
     seen: set[Tuple[int, str]] = set()
+    all_years_seen: set[int] = set()
 
-    containers = soup.select("#yeartimes, .yeartimes, #history, .history, #personal_best, #last_time, #participations, table")
-    if not containers:
-        containers = [soup]
-    for container in containers:
-        rows = container.find_all("tr") if getattr(container, "find_all", None) else []
-        if rows:
-            texts = [row.get_text(" ", strip=True) for row in rows]
-        else:
-            texts = [container.get_text(" ", strip=True)]
-        for text in texts:
-            years = [int(year) for year in re.findall(r"\b(20\d{2})\b", text)]
-            times = [parse_time(match.group(0)) for match in re.finditer(r"(?<!\d)\d{1,3}[:.]\d{2}(?:[:.]\d{1,2})?(?!\d)", text)]
-            times = [time for time in times if time]
-            if not years or not times:
-                continue
-            # Usually each history row has one year/time pair. For dense text,
-            # pairing by position is still safer than assigning every time.
-            for year, history_time in zip(years, times):
-                if year < current_year and (year, history_time) not in seen:
-                    seen.add((year, history_time))
-                    candidates.append((year, history_time))
+    # Stoltzen embeds an authoritative year/final-time list in a commented
+    # span. Reading it directly avoids confusing intermediate split times with
+    # the participant's final time.
+    year_times = re.search(
+        r'id=["\']yeartimes["\'][^>]*>(.*?)</span>', html or "", re.IGNORECASE | re.DOTALL
+    )
+    if year_times:
+        for year_text, time_text in re.findall(r"(20\d{2})\s*\|\s*(\d{1,3}[.:]\d{2})", year_times.group(1)):
+            year = int(year_text)
+            all_years_seen.add(year)
+            history_time = parse_time(time_text)
+            if history_time and year < current_year:
+                candidates.append((year, history_time))
+    else:
+        containers = soup.select("#yeartimes, .yeartimes, #history, .history, #personal_best, #last_time, #participations, table")
+        if not containers:
+            containers = [soup]
+        for container in containers:
+            rows = container.find_all("tr") if getattr(container, "find_all", None) else []
+            texts = [row.get_text(" ", strip=True) for row in rows] if rows else [container.get_text(" ", strip=True)]
+            for text in texts:
+                years = [int(year) for year in re.findall(r"\b(20\d{2})\b", text)]
+                all_years_seen.update(years)
+                times = [parse_time(match.group(0)) for match in re.finditer(r"(?<!\d)\d{1,3}[:.]\d{2}(?:[:.]\d{1,2})?(?!\d)", text)]
+                times = [history_time for history_time in times if history_time]
+                for year, history_time in zip(years, times):
+                    if year < current_year and (year, history_time) not in seen:
+                        seen.add((year, history_time))
+                        candidates.append((year, history_time))
 
     best_year, best_time = None, None
     if candidates:
@@ -298,8 +307,16 @@ def parse_history_html(html: str, current_year: int) -> Dict[str, Any]:
         count_match = re.search(r"\b(\d+)\b", participation_node.get_text(" ", strip=True))
         if count_match:
             explicit_count = int(count_match.group(1))
+    if explicit_count is not None:
+        # A profile can already contain the race year (for example when
+        # regression-testing 2025). Keep this value historical here because
+        # build_output_rows adds the current finished race exactly once.
+        current_or_future_entries = len({year for year in all_years_seen if year >= current_year})
+        participation_count = max(0, explicit_count - current_or_future_entries)
+    else:
+        participation_count = len(candidates)
     return {"BesteTidligere": best_time, "BesteÅr": best_year,
-            "Deltagelser": explicit_count if explicit_count is not None else len(candidates),
+            "Deltagelser": participation_count,
             "history": candidates}
 
 
@@ -311,6 +328,7 @@ class StoltzenHistory:
         self.base_url = "http://www.stoltzen.no"
         self.result_urls = tuple(result_urls)
         self._profile_index: Optional[Dict[str, str]] = None
+        self._history_cache: Dict[Tuple[str, int], Dict[str, Any]] = {}
 
     def _get(self, url: str) -> Optional[str]:
         try:
@@ -391,14 +409,21 @@ class StoltzenHistory:
         return None, None
 
     def history_for(self, name: str, current_year: int) -> Dict[str, Any]:
+        cache_key = (normalize_name(name), current_year)
+        if cache_key in self._history_cache:
+            return self._history_cache[cache_key]
         profile_url = self._indexed_profile_url(name)
         direct_html = None
         if not profile_url:
             profile_url, direct_html = self._search_page(name)
         if not profile_url:
-            return {"BesteTidligere": None, "BesteÅr": None, "Deltagelser": 0}
+            result = {"BesteTidligere": None, "BesteÅr": None, "Deltagelser": 0}
+            self._history_cache[cache_key] = result
+            return result
         html = direct_html if direct_html is not None else self._get(profile_url)
-        return parse_history_html(html or "", current_year)
+        result = parse_history_html(html or "", current_year)
+        self._history_cache[cache_key] = result
+        return result
 
 
 class EqtimingScraper:

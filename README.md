@@ -42,13 +42,24 @@ Kjør den nye standardflyten fra prosjektmappen:
 run_eqtiming_2026.bat
 ```
 
-Dette bruker EQ Timing-arrangement `78640`, søker etter klubben `COWI`, bruker
-2026 som løpsår og skriver `results.csv`. Scriptet henter årets data fra EQ
-Timing og prøver deretter å berike hver deltager med historikk fra Stoltzen.
-Resultater som ennå ikke har passert mål får tom `Tid`; de beholdes i CSV-en
-slik at startlisten kan vises før målgang.
+Dette starter en lokal live-tjeneste og åpner resultatvisningen automatisk.
+Tjenesten bruker EQ Timing-arrangement `78640`, søker etter klubben `COWI`,
+bruker 2026 som løpsår og oppdaterer `results.csv` hvert 30. sekund. Nettsiden
+henter den nye filen automatisk, så det er ikke nødvendig å velge CSV-fil eller
+oppdatere nettleseren manuelt. La konsollvinduet stå åpent under løpet, og trykk
+`Ctrl+C` der når live-oppdateringen skal stoppes.
 
-Samme flyt kan kjøres direkte med Python:
+Resultater som ennå ikke har passert mål får tom `Tid`; de beholdes i CSV-en
+slik at startlisten kan vises før målgang. Historikk fra Stoltzen mellomlagres,
+slik at den ikke lastes ned på nytt ved hver oppdatering.
+
+Live-flyten kan også kjøres direkte med Python:
+
+```cmd
+python src\live_results_server.py --event-id 78640 --club COWI --year 2026 --interval 30 --open-browser
+```
+
+For en enkelt CSV-eksport uten live-visning:
 
 ```cmd
 python src\eqtiming_scraper.py --event-id 78640 --club COWI --year 2026 --output results.csv
@@ -63,8 +74,8 @@ Nyttige valg:
 - `--output FIL` velger CSV-filen.
 - `--timeout SEKUNDER` angir HTTP-timeout.
 
-Åpne deretter `results_viewer.html`. Den laster automatisk `results.csv` når
-den kjøres via lokal webserver, eller du kan dra CSV-filen inn i filvelgeren.
+Den manuelle filvelgeren i `results_viewer.html` er kun en reserve for visning
+av en eldre eller separat CSV-fil.
 
 ### Windows Batch Scripts (Anbefalt for eldre Stoltzen-flyt)
 
@@ -124,8 +135,9 @@ http://stoltzen.no/statistikk/stat.php?id=67890
 `results_viewer.html` er en interaktiv webside som automatisk laster data fra `results.csv`:
 
 **Funksjoner:**
-- **Fleksibel filinnlasting**: Drag-and-drop eller filvelger for CSV-filer
-- **Automatisk prøving**: Forsøker å laste `results.csv` automatisk
+- **Live-oppdatering**: Henter ny `results.csv` automatisk hvert 30. sekund
+- **Oppdater nå**: Knapp for å hente siste data umiddelbart
+- **Manuell reserve**: Drag-and-drop eller filvelger ligger skjult under manuell CSV
 - **Komplett filtrering**: Søk, gruppe, klasse og ny bestetid filtre
 - **Sortering**: Klikk på kolonneheader for å sortere
 - **Responsivt design**: Fungerer på desktop og mobil
@@ -133,11 +145,10 @@ http://stoltzen.no/statistikk/stat.php?id=67890
 - **CORS-sikker**: Fungerer når åpnet som lokal fil
 
 **Bruk:**
-1. Kjør en av scraperne for å generere `results.csv`
-2. Åpne `results_viewer.html` i nettleseren
-3. **Metode 1**: Dra og slipp `results.csv` på dropområdet
-4. **Metode 2**: Klikk på dropområdet og velg CSV-fil
-5. **Metode 3**: Klikk "🔄 Prøv å last results.csv" (fungerer kun med lokal server)
+1. Kjør `run_eqtiming_2026.bat`
+2. Nettsiden åpnes automatisk og viser live-status øverst
+3. La konsollvinduet stå åpent mens resultatene skal oppdateres
+4. Bruk den sammenfoldede manuelle CSV-velgeren bare dersom du vil vise en annen fil
 
 ### Direkte Python-kommandoer
 
@@ -199,6 +210,7 @@ Pluss,Jon Laurits Strand,13:52,Pluss 90kg,4,13:37,2022,False,+0:15
 stoltzen-result-scraper/
 ├── src/                              # Kildekode-mappe
 │   ├── eqtiming_scraper.py           # EQ Timing 2026 + Stoltzen-historikk
+│   ├── live_results_server.py        # Live-oppdatering og lokal webserver
 │   ├── stoltzen_scraper.py          # Eldre scraper (Stoltzen-resultatsider)
 │   ├── stoltzen_stat_scraper.py     # Alternativt script (scraper stat URLs)
 │   ├── stat_urls.txt                # Eksempel URL-fil for stat scraper

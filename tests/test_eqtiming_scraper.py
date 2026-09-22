@@ -112,6 +112,27 @@ class EqtimingParserTests(unittest.TestCase):
         }]}
         self.assertIsNone(parse_eq_rows(payload)[0]["Tid"])
 
+    def test_participation_count_excludes_current_year_from_history(self):
+        html = """
+        <div id="participations">4</div>
+        <table>
+          <tr><td>2024</td><td>11.12</td></tr>
+          <tr><td>2025</td><td>11.30</td></tr>
+        </table>
+        """
+        history = parse_history_html(html, 2025)
+        self.assertEqual(history["Deltagelser"], 3)
+        self.assertEqual(history["BesteÅr"], 2024)
+
+    def test_commented_year_times_use_final_times_not_splits(self):
+        html = """
+        <!-- <span id="yeartimes">2023|15.54;2024|14.48;2025|15.12;</span> -->
+        <table><tr><td>2024</td><td>01:09</td><td>14:48</td></tr></table>
+        """
+        history = parse_history_html(html, 2025)
+        self.assertEqual(history["BesteTidligere"], "14:48")
+        self.assertEqual(history["BesteÅr"], 2024)
+
 
 if __name__ == "__main__":
     unittest.main()

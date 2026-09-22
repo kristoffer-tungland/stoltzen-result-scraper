@@ -33,18 +33,14 @@ if errorlevel 1 (
     )
 )
 
-echo [INFO] Fetching COWI results for EQ Timing event 78640...
-python src\eqtiming_scraper.py --event-id 78640 --club COWI --year 2026 --output results.csv
+echo [INFO] Starting live results for EQ Timing event 78640...
+echo [INFO] The browser refreshes automatically every 30 seconds.
+python src\live_results_server.py --event-id 78640 --club COWI --year 2026 --output results.csv --interval 30 --open-browser
 if errorlevel 1 (
     echo.
     echo [ERROR] EQ Timing scraper failed.
     pause
     exit /b 1
 )
-
-echo.
-echo [SUCCESS] Results saved to results.csv
-set /p OPEN_VIEWER="Open results_viewer.html now? (y/n): "
-if /i "%OPEN_VIEWER%"=="y" start "" "results_viewer.html"
 
 endlocal
