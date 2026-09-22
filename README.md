@@ -1,6 +1,9 @@
 # Stoltzen Result Scraper
 
-Et Python-script som henter og parser løpsresultater fra Stoltzekleiven Opp 2024 for Cowi-teamet.
+Et Python-script som henter og parser løpsresultater fra Stoltzekleiven Opp for COWI-teamet.
+
+For årets løp (2026) er EQ Timing kilden til løpstiden samme dag. Stoltzen brukes
+fortsatt som kilde til historiske tider og antall tidligere deltagelser.
 
 ## Funktionalitet
 
@@ -13,7 +16,7 @@ Scriptet:
 3. For hver deltaker henter den profil-informasjon fra `http://stoltzen.no/statistikk/stat.php?id=XXXXX`
 4. Ekstraherer historisk data inkludert:
    - Antall deltagelser totalt
-   - Beste tidligere tid (før 2024)
+   - Beste tidligere tid før årets løpsår
    - År for beste tidligere tid
    - Om årets tid er en ny personlig rekord
 5. Skriver resultater til en CSV-fil (`results.csv`) sortert etter gruppe og tid
@@ -31,7 +34,39 @@ pip install -r requirements.txt
 
 ## Bruk
 
-### Windows Batch Scripts (Anbefalt)
+### EQ Timing 2026 (anbefalt)
+
+Kjør den nye standardflyten fra prosjektmappen:
+
+```cmd
+run_eqtiming_2026.bat
+```
+
+Dette bruker EQ Timing-arrangement `78640`, søker etter klubben `COWI`, bruker
+2026 som løpsår og skriver `results.csv`. Scriptet henter årets data fra EQ
+Timing og prøver deretter å berike hver deltager med historikk fra Stoltzen.
+Resultater som ennå ikke har passert mål får tom `Tid`; de beholdes i CSV-en
+slik at startlisten kan vises før målgang.
+
+Samme flyt kan kjøres direkte med Python:
+
+```cmd
+python src\eqtiming_scraper.py --event-id 78640 --club COWI --year 2026 --output results.csv
+```
+
+Nyttige valg:
+
+- `--no-history` hopper over kallene til Stoltzen og er nyttig for rask live-oppdatering.
+- `--event-id ID` velger et annet EQ Timing-arrangement.
+- `--club NAVN` endrer klubb-/teamsøket.
+- `--year ÅR` angir hvilket år som skal behandles som årets løp.
+- `--output FIL` velger CSV-filen.
+- `--timeout SEKUNDER` angir HTTP-timeout.
+
+Åpne deretter `results_viewer.html`. Den laster automatisk `results.csv` når
+den kjøres via lokal webserver, eller du kan dra CSV-filen inn i filvelgeren.
+
+### Windows Batch Scripts (Anbefalt for eldre Stoltzen-flyt)
 
 ```cmd
 # Enkel kjøring - spør om URL og åpner resultatet
@@ -53,7 +88,7 @@ update_requirements.bat
 ### URL-input
 
 Alle batch scripts spør nå om URL-en til resultatsiden:
-- **Standard URL**: `http://stoltzen.no/resultater/2024/resklubb_16.html` (Cowi 2024)
+- **Standard URL**: `http://stoltzen.no/resultater/2024/resklubb_16.html` (historisk COWI-side)
 - **Custom URL**: Skriv inn egen URL for andre klubber eller år
 - **Tom input**: Trykk Enter for å bruke standard URL
 
@@ -119,6 +154,7 @@ python src/stoltzen_scraper.py \"http://stoltzen.no/resultater/2024/resklubb_16.
 # Vis hjelp
 python src/stoltzen_scraper.py --help
 python src/stoltzen_stat_scraper.py --help
+python src/eqtiming_scraper.py --help
 ```
 
 ## CSV-struktur
@@ -138,14 +174,14 @@ Pluss,Jon Laurits Strand,13:52,Pluss 90kg,4,13:37,2022,False,+0:15
 - **Tid**: Årets løpstid
 - **Klasse**: Aldersklasse/kategori
 - **Deltagelser**: Totalt antall deltagelser
-- **BesteTidligere**: Beste tidligere tid (før 2024)
+- **BesteTidligere**: Beste tidligere tid før årets løpsår
 - **BesteÅr**: År for beste tidligere tid
 - **NyBestetid**: True hvis årets tid er ny personlig rekord
 - **Differanse**: Tidsdifferanse fra beste tidligere (+tregere, -raskere)
 
 ## Tekniske detaljer
 
-- **Concurrent HTTP requests**: Bruker `ThreadPoolExecutor` for parallell henting av profiler (maks 10 samtidige)
+- **Concurrent HTTP requests**: Bruker `ThreadPoolExecutor` for parallell henting av Stoltzen-historikk (maks 10 samtidige)
 - **Robust parsing**: Håndterer manglende data gracefully - setter til `null` hvis ikke funnet
 - **Tidsformat-parsing**: Normaliserer tidsformater fra "1:23:45" til "1:23:45" eller "23:45"
 - **Feilhåndtering**: Fortsetter selv om enkelte profiler ikke kan hentes
@@ -162,13 +198,15 @@ Pluss,Jon Laurits Strand,13:52,Pluss 90kg,4,13:37,2022,False,+0:15
 ```
 stoltzen-result-scraper/
 ├── src/                              # Kildekode-mappe
-│   ├── stoltzen_scraper.py          # Hovedscript (scraper resultatsider)
+│   ├── eqtiming_scraper.py           # EQ Timing 2026 + Stoltzen-historikk
+│   ├── stoltzen_scraper.py          # Eldre scraper (Stoltzen-resultatsider)
 │   ├── stoltzen_stat_scraper.py     # Alternativt script (scraper stat URLs)
 │   ├── stat_urls.txt                # Eksempel URL-fil for stat scraper
 │   ├── requirements.txt             # Python-avhengigheter
 │   └── update_requirements.bat      # Automatisk requirements oppdatering
 ├── quick_run.bat                    # Enkel Windows batch-kjøring
-├── run_scraper.bat                  # Standard Windows batch med feilhåndtering
+├── run_eqtiming_2026.bat            # Anbefalt kjøring for 2026
+├── run_scraper.bat                  # Eldre Windows batch med feilhåndtering
 ├── run_stat_scraper.bat             # Batch for stat URL scraper
 ├── run_scraper_advanced.bat         # Avansert Windows batch med meny
 ├── results_viewer.html              # HTML-visning av resultater (laster data fra results.csv)
@@ -207,7 +245,7 @@ Hvis noen profiler mangler data:
 
 Hvis "NyBestetid" vises som `false` når det burde være `true`:
 - Sjekk at tidsformatene kan sammenlignes korrekt
-- Verifiser at "BesteÅr" er før 2024
+- Verifiser at "BesteÅr" er før årets løpsår (for standardflyten før 2026)
 
 Hvis nordiske bokstaver vises feil:
 - Sørg für at JSON-filen åpnes med UTF-8 encoding
