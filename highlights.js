@@ -25,7 +25,11 @@
     if (record.some(value => value.trim())) records.push(record);
     if (!records.length) return [];
     const headers = records.shift().map(header => header.toLowerCase().replaceAll("å", "aa"));
-    return records.map(values => Object.fromEntries(headers.map((header, index) => [header, values[index] || ""])));
+    return records.map(values => {
+      const row = Object.fromEntries(headers.map((header, index) => [header, values[index] || ""]));
+      if (row.gruppe === "Pluss") row.gruppe = /kvinn|dame|women|female/i.test(row.klasse || "") ? "Dame" : "Mann";
+      return row;
+    });
   }
 
   function seconds(value) {

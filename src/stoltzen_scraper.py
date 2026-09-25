@@ -97,7 +97,7 @@ class StoltzenScraper:
     
     def parse_results_table(self, soup: BeautifulSoup) -> Dict[str, List[Dict]]:
         """Parse the main results table and categorize participants."""
-        results = {"Mann": [], "Dame": [], "Pluss": []}
+        results = {"Mann": [], "Dame": []}
         
         # Find the results table - look for table with participant data
         tables = soup.find_all('table')
@@ -153,8 +153,6 @@ class StoltzenScraper:
                 current_category = None
                 if 'kvinner' in category_text:
                     current_category = "Dame"
-                elif 'pluss 90kg' in category_text or 'pluss90kg' in category_text:
-                    current_category = "Pluss"
                 elif 'menn' in category_text or 'herrer' in category_text:
                     current_category = "Mann"
                 else:
@@ -424,7 +422,7 @@ def main():
             future = executor.submit(fetch_profile_wrapper, participant)
             future_to_participant[future] = (category, participant)
         
-        processed_results = {"Mann": [], "Dame": [], "Pluss": []}
+        processed_results = {"Mann": [], "Dame": []}
         
         for future in as_completed(future_to_participant):
             category, original_participant = future_to_participant[future]
@@ -446,10 +444,9 @@ def main():
             participant_with_group['Gruppe'] = category
             all_participants.append(participant_with_group)
     
-    # Sort by group (Dame, Mann, Pluss) and then by time
+    # Sort by gender and then by time; Pluss 90kg remains a class.
     def get_sort_key(participant):
-        # Group priority: Dame=1, Mann=2, Pluss=3
-        group_priority = {'Dame': 1, 'Mann': 2, 'Pluss': 3}
+        group_priority = {'Dame': 1, 'Mann': 2}
         group_order = group_priority.get(participant.get('Gruppe'), 4)
         
         # Time sorting (convert to seconds for proper comparison)
@@ -492,7 +489,7 @@ def main():
                     group_counts[group] = group_counts.get(group, 0) + 1
                 
                 print("\nGroup summary:")
-                for group in ['Dame', 'Mann', 'Pluss']:
+                for group in ['Dame', 'Mann']:
                     count = group_counts.get(group, 0)
                     if count > 0:
                         print(f"  {group}: {count} participants")

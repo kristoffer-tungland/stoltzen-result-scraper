@@ -172,8 +172,6 @@ class StoltzenStatScraper:
         
         if 'kvinner' in class_lower or 'kvinne' in class_lower or 'dame' in class_lower:
             return "Dame"
-        elif 'pluss 90kg' in class_lower or 'pluss90kg' in class_lower or 'pluss' in class_lower:
-            return "Pluss"
         elif ('menn' in class_lower or 'mann' in class_lower or 'herrer' in class_lower or 
               'herre' in class_lower):
             return "Mann"
@@ -507,10 +505,9 @@ def main():
         print("No participants found", file=sys.stderr)
         return
     
-    # Sort by group (Dame, Mann, Pluss) and then by time
+    # Sort by gender and then by time; Pluss 90kg remains a class.
     def get_sort_key(participant):
-        # Group priority: Dame=1, Mann=2, Pluss=3
-        group_priority = {'Dame': 1, 'Mann': 2, 'Pluss': 3}
+        group_priority = {'Dame': 1, 'Mann': 2}
         group_order = group_priority.get(participant.get('Gruppe'), 4)
         
         # Time sorting (convert to seconds for proper comparison)
@@ -549,7 +546,7 @@ def main():
                 group_counts[group] = group_counts.get(group, 0) + 1
             
             print("\nGroup summary:")
-            for group in ['Dame', 'Mann', 'Pluss']:
+            for group in ['Dame', 'Mann']:
                 count = group_counts.get(group, 0)
                 if count > 0:
                     print(f"  {group}: {count} participants")

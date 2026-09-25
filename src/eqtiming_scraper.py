@@ -196,14 +196,21 @@ def _class_text(row: Mapping[str, Any]) -> str:
 
 
 def group_from_class(class_text: str, row: Optional[Mapping[str, Any]] = None) -> str:
-    text = (class_text or "")
+    # Weight/age classes are not gender groups. Prefer EQ's explicit sex field,
+    # which is often nested inside Deltaker.Klasse or Deltaker.Utover.
     if row:
-        text += " " + str(_first(row, "Gender", "Sex", "Group", "Division") or "")
-    lower = text.casefold()
+        candidates = [row.get("Klasse"), row.get("Class"), row.get("Utover"), row]
+        for candidate in candidates:
+            if not isinstance(candidate, Mapping):
+                continue
+            gender = str(_first(candidate, "Kjonn", "Kjønn", "Gender", "Sex") or "").strip().casefold()
+            if gender in ("f", "k", "female", "woman", "women", "kvinne", "kvinner", "dame"):
+                return "Dame"
+            if gender in ("m", "male", "man", "men", "mann", "menn", "herre"):
+                return "Mann"
+    lower = (class_text or "").casefold()
     if any(token in lower for token in ("kvinner", "kvinne", "women", "female", "dame")):
         return "Dame"
-    if "pluss" in lower or "plus" in lower:
-        return "Pluss"
     return "Mann"
 
 
@@ -568,7 +575,7 @@ def build_output_rows(eq_rows: Sequence[Mapping[str, Any]], current_year: int, h
         current_seconds, previous_seconds = time_to_seconds(current), time_to_seconds(best)
         is_finished = current_seconds is not None and current_seconds > 0
         output.append({
-            "Gruppe": row.get("Gruppe") or group_from_class(str(row.get("Klasse") or "")),
+            "Gruppe": row.get("Gruppe") if row.get("Gruppe") in ("Dame", "Mann") else group_from_class(str(row.get("Klasse") or ""), row),
             "Navn": name,
             "Tid": current,
             "Mellomtider": row.get("Mellomtider") or "",
@@ -583,7 +590,7 @@ def build_output_rows(eq_rows: Sequence[Mapping[str, Any]], current_year: int, h
             "NyBestetid": bool(is_finished and previous_seconds is not None and current_seconds < previous_seconds),
             "Differanse": calculate_difference(current, best),
         })
-    group_order = {"Dame": 1, "Mann": 2, "Pluss": 3}
+    group_order = {"Dame": 1, "Mann": 2}
     output.sort(key=lambda row: (group_order.get(row["Gruppe"], 4), time_to_seconds(row["Tid"]) if row["Tid"] else 10**9, row["Navn"].casefold()))
     return output
 

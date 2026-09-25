@@ -12,7 +12,7 @@ Scriptet:
 2. Parser resultat-tabellen og kategoriserer deltakerne i:
    - **Dame**
    - **Mann** 
-   - **Pluss**
+   Klassen **Pluss 90kg** beholdes i `Klasse`, ikke som eget kjønn.
 3. For hver deltaker henter den profil-informasjon fra `http://stoltzen.no/statistikk/stat.php?id=XXXXX`
 4. Ekstraherer historisk data inkludert:
    - Antall deltagelser totalt
@@ -197,17 +197,17 @@ python src/eqtiming_scraper.py --help
 
 ## CSV-struktur
 
-Resultatet lagres i `results.csv` med følgende kolonner sortert etter gruppe (Dame, Mann, Pluss) og tid (beste først):
+Resultatet lagres i `results.csv` med følgende kolonner sortert etter kjønn (Dame, Mann) og tid (beste først):
 
 ```csv
 Gruppe,Navn,Tid,Klasse,Deltagelser,BesteTidligere,BesteÅr,NyBestetid,Differanse
 Dame,Ingvild Erdal,11:58,Kvinner 18-34 år,3,12:30,2023,True,-0:32
 Mann,Ole Eirik Foshaugen,11:12,Menn 35-39 år,3,11:29,2023,True,-0:17
-Pluss,Jon Laurits Strand,13:52,Pluss 90kg,4,13:37,2022,False,+0:15
+Mann,Jon Laurits Strand,13:52,Pluss 90kg,4,13:37,2022,False,+0:15
 ```
 
 **Kolonneforklaring:**
-- **Gruppe**: Dame, Mann eller Pluss
+- **Gruppe**: Dame eller Mann (vises som Kvinner og Menn på nettsiden)
 - **Navn**: Deltakerens navn
 - **Tid**: Årets løpstid
 - **Klasse**: Aldersklasse/kategori
@@ -260,8 +260,8 @@ stoltzen-result-scraper/
 - **Differanse**: Tidsdifferanse mellom årets tid og beste tidligere tid (f.eks. "-0:17" = 17 sekunder raskere, "+1:23" = 1 minutt 23 sekunder tregere)
 - **Klasse**: Full klassebeskriving (f.eks. "Menn 35-39 år")
 - **URL-argument**: Fleksibel URL-input for ulike resultatsider
-- **Forbedret kategorisering**: Mann/Dame/Pluss i stedet for Menn/Kvinner/Pluss 90kg
-- **Sortering**: Resultater sorteres først etter gruppe (Dame, Mann, Pluss) og deretter etter tid (beste tid først)
+- **Forbedret kategorisering**: Kun Dame/Mann som kjønn; Pluss 90kg er en klasse
+- **Sortering**: Resultater sorteres først etter kjønn (Dame, Mann) og deretter etter tid (beste tid først)
 - **CSV-format**: Strukturert CSV-fil med UTF-8 encoding for enkel bruk i Excel og andre verktøy
 - **Norske tegn**: Korrekt håndtering av æøå og andre nordiske bokstaver i UTF-8 format
 

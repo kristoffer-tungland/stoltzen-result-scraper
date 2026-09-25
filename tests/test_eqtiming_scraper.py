@@ -15,6 +15,9 @@ from eqtiming_scraper import (  # noqa: E402
     parse_eq_splits,
     parse_history_html,
 )
+from stoltzen_stat_scraper import StoltzenStatScraper  # noqa: E402
+from stoltzen_scraper import StoltzenScraper  # noqa: E402
+from bs4 import BeautifulSoup  # noqa: E402
 
 
 class FixtureHistory:
@@ -25,6 +28,15 @@ class FixtureHistory:
 
 
 class EqtimingParserTests(unittest.TestCase):
+    def test_legacy_stoltzen_weight_class_is_male_group(self):
+        soup = BeautifulSoup(
+            '<table><tr><td>1</td><td><a href="stat.php?id=1">Ola</a></td>'
+            '<td>12:00</td><td>Pluss 90kg</td></tr></table>', "html.parser")
+        results = StoltzenScraper().parse_results_table(soup)
+        self.assertEqual(results["Mann"][0]["Klasse"], "Pluss 90kg")
+        self.assertEqual(set(results), {"Dame", "Mann"})
+        self.assertEqual(StoltzenStatScraper().determine_group_from_class("Pluss 90kg"), "Mann")
+
     def test_current_result_format_and_startlist_are_merged(self):
         result_payload = {
             "Items": [{
@@ -60,6 +72,17 @@ class EqtimingParserTests(unittest.TestCase):
         self.assertEqual(row["Navn"], "Kari Nordmann")
         self.assertEqual(row["Klasse"], "Kvinner 30-39")
         self.assertEqual(row["Tid"], "9:12")
+
+    def test_weight_class_is_not_a_gender_group(self):
+        payload = {"Items": [
+            {"Deltaker": {"UID": 1, "Utover": {"NavnFormatert": "Ola", "Kjonn": "m"},
+                           "Klasse": {"Navn": "Pluss 90kg", "Kjonn": "m"}}, "Formatert": "12:00"},
+            {"Deltaker": {"UID": 2, "Utover": {"NavnFormatert": "Kari", "Kjonn": "f"},
+                           "Klasse": {"Navn": "+90 kg", "Kjonn": "f"}}, "Formatert": "13:00"},
+        ]}
+        rows = parse_eq_rows(payload)
+        self.assertEqual([(row["Gruppe"], row["Klasse"]) for row in rows],
+                         [("Mann", "Pluss 90kg"), ("Dame", "+90 kg")])
 
     def test_direct_profile_search_response_is_parsed(self):
         class Response:

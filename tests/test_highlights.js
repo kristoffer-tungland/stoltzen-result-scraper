@@ -1,10 +1,31 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
 const { parseCsv, calculate } = require("../highlights.js");
+
+test("viewer treats legacy +90 kg rows as a class, not a gender", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "results_viewer.html"), "utf8");
+  const source = html.match(/^function parseCSV\(csv\)\{.*$/m)?.[0];
+  assert.ok(source);
+  const parseViewerCsv = vm.runInNewContext(`${source}; parseCSV`);
+  const [row] = parseViewerCsv("Gruppe,Klasse,Navn\nPluss,Pluss 90kg,Ola\n");
+  assert.equal(row.gruppe, "Mann");
+  assert.equal(row.klasse, "Pluss 90kg");
+  assert.doesNotMatch(html, /id="filterGroup"[^<]*<option value="Pluss"/);
+});
 
 test("CSV parser keeps quoted names and Norwegian headers", () => {
   const rows = parseCsv('Navn,Gruppe,BesteÅr\r\n"Nordmann, Kari",Dame,2024\r\n');
   assert.deepEqual(rows, [{ navn: "Nordmann, Kari", gruppe: "Dame", besteaar: "2024" }]);
+});
+
+test("legacy +90 kg CSV rows join men's leaderboard while retaining class", () => {
+  const rows = parseCsv("Navn,Gruppe,Klasse,Tid\nOla,Pluss,Pluss 90kg,9:00\n");
+  assert.equal(rows[0].gruppe, "Mann");
+  assert.equal(rows[0].klasse, "Pluss 90kg");
+  assert.equal(calculate(rows).topMen[0].navn, "Ola");
 });
 
 test("first arrival uses finish clock, while leaderboards use elapsed time", () => {
