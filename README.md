@@ -58,6 +58,10 @@ Resultater som ennå ikke har passert mål får tom `Tid`; de beholdes i CSV-en
 slik at startlisten kan vises før målgang. Historikk fra Stoltzen mellomlagres,
 slik at den ikke lastes ned på nytt ved hver oppdatering.
 
+EQ Timing-søket kan også gi feilmerkede COWI-treff. Når startlisten har én tydelig,
+sammenhengende blokk av startnummer, tas bare denne blokken med. Hvis ingen slik
+blokk finnes, filtreres ingen bort på startnummer.
+
 Personoversikten viser kumulative mellomtider fra EQ Timings passeringer og
 tidligere bestetid fra Stoltzen. Nykommere har ingen tidligere bestetid.
 `Deltakelser` teller bare

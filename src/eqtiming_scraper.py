@@ -161,6 +161,12 @@ def _uid(row: Mapping[str, Any]) -> Optional[str]:
     return str(value) if value not in (None, "") else None
 
 
+def _start_number(row: Mapping[str, Any]) -> Optional[int]:
+    value = _first(row, "Startnummer", "StartNumber", "BibNumber", "Bib")
+    text = str(value or "").strip()
+    return int(text) if text.isdecimal() else None
+
+
 def _name(row: Mapping[str, Any]) -> str:
     # In the current EQ shape, the display name is specifically under
     # Deltaker.Utover.  Check this before flattened Navn from Klasse.Navn.
@@ -236,10 +242,29 @@ def parse_eq_rows(payload: Any, *, source: str = "result") -> List[Dict[str, Any
             "Tid": parsed_time,
             "Klasse": class_text,
             "Gruppe": group_from_class(class_text, row),
+            "_start_number": _start_number(row),
             "_source": source,
             "_raw": row,
         })
     return parsed
+
+
+def _main_start_block(rows: Sequence[Mapping[str, Any]]) -> Optional[Tuple[int, int]]:
+    """Identify a dominant consecutive club block, if one exists."""
+    numbers = sorted({row.get("_start_number") for row in rows
+                      if isinstance(row.get("_start_number"), int)})
+    if not numbers:
+        return None
+    blocks: List[List[int]] = [[numbers[0]]]
+    for number in numbers[1:]:
+        if number == blocks[-1][-1] + 1:
+            blocks[-1].append(number)
+        else:
+            blocks.append([number])
+    largest = max(blocks, key=len)
+    if len(largest) < 3 or len(largest) <= len(numbers) / 2:
+        return None
+    return largest[0], largest[-1]
 
 
 def merge_eq_rows(results: Sequence[Mapping[str, Any]], startlist: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
@@ -503,6 +528,15 @@ class EqtimingScraper:
             return not value or query_key in normalize_name(value)
         results = [row for row in results if in_club(row)]
         starts = [row for row in starts if in_club(row)]
+        block = _main_start_block(starts)
+        if block:
+            start_numbers_by_uid = {row["_uid"]: row["_start_number"] for row in starts
+                                    if row.get("_uid") and row.get("_start_number") is not None}
+            def in_start_block(row: Mapping[str, Any]) -> bool:
+                number = start_numbers_by_uid.get(row.get("_uid"), row.get("_start_number"))
+                return number is None or block[0] <= number <= block[1]
+            results = [row for row in results if in_start_block(row)]
+            starts = [row for row in starts if in_start_block(row)]
         merged = merge_eq_rows(results, starts)
         def load_splits(row: Mapping[str, Any]) -> Tuple[str, Dict[str, str], bool]:
             uid = str(row["_uid"])

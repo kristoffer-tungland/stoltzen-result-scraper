@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from eqtiming_scraper import (  # noqa: E402
     EqtimingScraper,
+    _main_start_block,
     StoltzenHistory,
     build_output_rows,
     calculate_difference,
@@ -228,6 +229,39 @@ class EqtimingParserTests(unittest.TestCase):
 
         rows = Scraper().fetch_current("78991", "COWI")
         self.assertEqual(rows[0]["Mellomtider"], "Halvveis 5:21")
+
+    def test_fetch_current_excludes_isolated_false_cowi_start_number(self):
+        class Scraper(EqtimingScraper):
+            def fetch_json(self, url):
+                if "/Result/Search/" in url:
+                    return {"Items": [
+                        {"Deltaker": {"UID": 1, "Startnummer": 5951,
+                                       "Utover": {"NavnFormatert": "A"}},
+                         "KlubbTeamFormatert": "COWI", "Formatert": "11:00"},
+                        {"Deltaker": {"UID": 4,
+                                       "Utover": {"NavnFormatert": "Feilmerking"}},
+                         "KlubbTeamFormatert": "COWI", "Formatert": "12:00"},
+                    ]}
+                if "/Startlist/" in url:
+                    return {"Items": [
+                        {"Deltaker": {"UID": 1, "Utover": {"NavnFormatert": "A"}},
+                         "KlubbTeamFormatert": "COWI", "Startnummer": 5951},
+                        {"Deltaker": {"UID": 2, "Utover": {"NavnFormatert": "B"}},
+                         "KlubbTeamFormatert": "COWI", "Startnummer": 5952},
+                        {"Deltaker": {"UID": 3, "Utover": {"NavnFormatert": "C"}},
+                         "KlubbTeamFormatert": "COWI", "Startnummer": 5953},
+                        {"Deltaker": {"UID": 4, "Utover": {"NavnFormatert": "Feilmerking"}},
+                         "KlubbTeamFormatert": "COWI", "Startnummer": 4842},
+                    ]}
+                return {"Items": []}
+
+        self.assertEqual([row["Navn"] for row in Scraper().fetch_current("78640", "COWI")],
+                         ["A", "B", "C"])
+
+    def test_no_start_block_filter_without_a_dominant_run(self):
+        rows = [{"_start_number": number} for number in (100, 101, 200, 201)]
+        self.assertIsNone(_main_start_block(rows))
+        self.assertIsNone(_main_start_block([{"_start_number": None}]))
 
     def test_finished_result_carries_highlight_fields_into_csv_rows(self):
         class Scraper(EqtimingScraper):
