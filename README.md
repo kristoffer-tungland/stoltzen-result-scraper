@@ -34,6 +34,33 @@ python -m pip install -r src/requirements.txt
 
 ## Bruk
 
+### GitHub Pages: ferdig 2026-løp
+
+Den statiske nettsiden ligger i `docs/` og bruker kun et øyeblikksbilde av
+`results.csv` for 2026. Resultatvisning, oversikter og diplomer virker uten
+Python-server, EQ Timing-tilkobling eller automatisk dataoppdatering. Startsiden
+`docs/index.html` åpner 2026-visningen direkte. Den lokale F5/live-profilen
+endres ikke.
+
+Bygg publiseringsmappen fra den kontrollerte lokale 2026-filen:
+
+```cmd
+.venv\Scripts\python.exe scripts\build_pages.py
+```
+
+Hvis Python er tilgjengelig i PATH, kan du bruke `python scripts\build_pages.py`.
+Bygget kontrollerer CSV-kolonner og at minst én deltaker har sluttid, og kopierer
+bare filene nettstedet trenger. Se gjennom antall startende og fullførte som
+skrives ut før du publiserer. Ved rettelser i `results.csv` må du bygge på nytt
+og pushe de oppdaterte filene i `docs/`.
+
+For å publisere: commit og push `docs/` og kodeendringene til `main`. Åpne så
+GitHub-repoets **Settings → Pages**, velg **Deploy from a branch**, **main** og
+**/docs**, og lagre. Siden blir tilgjengelig på repoets GitHub Pages-adresse.
+Merk at `docs/results.csv` og deltakernavnene blir offentlig tilgjengelige når
+du publiserer. Rotfilen `results.csv` forblir ignorert av Git; bare den bevisst
+kopierte filen i `docs/` publiseres.
+
 ### EQ Timing 2025 og 2026
 
 I VS Code kan live-visningen startes direkte med `F5`. Profilen

@@ -175,3 +175,44 @@ test("overview warns when the CSV itself is stale despite a fresh browser fetch"
   assert.equal(elements.get("overviewYear").textContent, "Løpets øyeblikk · 2025");
   assert.equal(elements.get("eqSource").href, "https://live.eqtiming.com/78991");
 });
+
+test("archived overview reads the published CSV once without stale warnings", async () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "oversikter.html"), "utf8");
+  const script = html.match(/<script>\s*const H = window\.StoltzenHighlights;([\s\S]*?)<\/script>/)?.[0]
+    .replace(/^<script>/, "").replace(/<\/script>$/, "");
+  const elements = new Map();
+  const subtitle = { textContent: "" };
+  const document = {
+    documentElement: { classList: { add() {} } },
+    querySelector: () => subtitle,
+    getElementById(id) {
+      if (!elements.has(id)) elements.set(id, {
+        textContent: "", innerHTML: "", addEventListener() {},
+        classList: { add() {}, toggle() {} },
+      });
+      return elements.get(id);
+    },
+    addEventListener() {},
+  };
+  const fetched = [];
+  let intervals = 0;
+  vm.runInNewContext(script, {
+    window: { StoltzenHighlights: { parseCsv, calculate }, setInterval() { intervals += 1; } },
+    document, parent: {}, URLSearchParams,
+    location: { search: "?static=1&year=2026&event=78640" },
+    fetch: async url => {
+      fetched.push(url);
+      return {
+        ok: true,
+        headers: { get: () => "Fri, 01 Jan 2021 00:00:00 GMT" },
+        text: async () => "Navn,Tid,Maalpassering,Trappetid,StartenTid\nKari,11:00,2026-09-25T12:00:00,3:00,2:00\n",
+      };
+    },
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(fetched, ["results.csv"]);
+  assert.equal(intervals, 0);
+  assert.match(elements.get("status").textContent, /Resultatarkiv 2026/);
+  assert.equal(elements.get("finishedCount").textContent, 1);
+  assert.equal(subtitle.textContent, "Resultatarkiv 2026");
+});

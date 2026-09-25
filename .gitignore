@@ -2,6 +2,7 @@
 
 # Results files - these contain scraped data and don't need to be in version control
 results.csv
+!docs/results.csv
 results_*.csv
 results_utf8.csv
 results_corrected.csv
