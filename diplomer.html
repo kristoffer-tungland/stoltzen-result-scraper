@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stoltzen · Diplomer</title>
+<style>
+@font-face{font-family:DiplomFraktur;src:url("assets/fonts/UnifrakturCook-Bold.ttf") format("truetype");font-style:normal;font-weight:700;font-display:swap}
+@font-face{font-family:DiplomScript;src:url("assets/fonts/GreatVibes-Regular.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
+:root{color-scheme:dark;--bg:#181818;--panel:#262626;--line:#484848;--text:#fff;--muted:#bbb;--accent:#f04e23;--gold:#d89400}
+*{box-sizing:border-box}body{margin:0;color:var(--text);background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.app{min-height:100vh}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:19px 28px;border-bottom:1px solid var(--line);background:#242424}.toolbar h1{margin:0;font-size:1.55rem;letter-spacing:-.04em}.toolbar p{margin:2px 0 0;color:var(--muted);font-size:.86rem}.toolbar a{padding:9px 14px;border:1px solid var(--line);border-radius:9px;color:var(--text);text-decoration:none;font-weight:750}.toolbar a:hover{border-color:var(--accent)}
+.workspace{display:grid;grid-template-columns:320px minmax(0,1fr);min-height:calc(100vh - 81px)}.controls{padding:22px;border-right:1px solid var(--line);background:var(--panel)}.controls h2{margin:0 0 18px;font-size:1.15rem}.control{margin:0 0 17px}.control label{display:block;margin-bottom:7px;font-size:.8rem;font-weight:750}.control input[type="number"],.control input[type="search"],.control input[type="file"],.control select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;color:var(--text);background:#333}.control input[type="file"]{font-size:.78rem}.hint{margin:7px 0 0;color:var(--muted);font-size:.75rem;line-height:1.4}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button,.pager button{padding:9px 11px;border:1px solid var(--line);border-radius:9px;color:var(--text);background:#363636;font-size:.8rem;font-weight:750}.actions button:hover,.pager button:hover{border-color:var(--accent)}.actions button:disabled,.pager button:disabled{opacity:.45;cursor:not-allowed}.print-button{width:100%;margin-top:20px;padding:13px;border:0;border-radius:11px;color:#fff;background:var(--accent);font-weight:850}.print-button:disabled{opacity:.45;cursor:not-allowed}.status{margin:12px 0;color:var(--muted);font-size:.8rem;line-height:1.45}.status.error{color:#ff9a83}.list-header{display:flex;justify-content:space-between;gap:8px;margin:20px 0 8px;font-size:.8rem;font-weight:800}.roster{max-height:36vh;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#202020}.person{display:flex;align-items:center;gap:9px;padding:8px 10px;border-bottom:1px solid #ffffff12;font-size:.83rem;cursor:pointer}.person:last-child{border-bottom:0}.person:hover{background:#ffffff0b}.person input{accent-color:var(--accent)}.person .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.person .time{color:#ff8060;font-variant-numeric:tabular-nums;font-weight:800}
+.preview-area{min-width:0;padding:20px 26px 34px;background:radial-gradient(circle at top left,#f04e2320,transparent 32rem),#151515}.preview-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:820px;margin:0 auto 14px}.preview-bar h2{margin:0;font-size:1rem}.pager{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:.84rem}.empty{max-width:820px;margin:0 auto;padding:56px 20px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);text-align:center}.certificate{display:none;position:relative;width:210mm;height:297mm;margin:0 auto;overflow:hidden;color:#111;background:#fff;box-shadow:0 18px 55px #0009;text-align:center;print-color-adjust:exact;-webkit-print-color-adjust:exact}.certificate.active{display:block}.certificate .title{position:absolute;top:17mm;left:9mm;width:192mm;margin:0;color:#eaa000;font-family:DiplomFraktur,"Old English Text MT",Georgia,serif;font-size:34pt;font-weight:700;line-height:1.25;text-shadow:1.2mm 1mm 1mm #7776;white-space:nowrap}.certificate .hero{position:absolute;top:68mm;left:30mm;width:150mm;height:74mm;margin:0;padding:2.5mm;border:.4mm solid #df9900}.certificate .hero img{display:block;width:100%;height:100%;object-fit:cover}.certificate .slogan{position:absolute;top:154mm;left:10mm;width:190mm;margin:0;color:var(--gold);font-family:DiplomFraktur,"Old English Text MT",Georgia,serif;font-size:24pt;font-weight:700;white-space:nowrap}.certificate .award{position:absolute;top:173mm;left:10mm;width:190mm;margin:0;font-family:DiplomFraktur,"Old English Text MT",Georgia,serif;font-size:20pt;font-weight:700}.certificate .recipient{position:absolute;top:195mm;left:8mm;width:194mm;margin:0;font-family:DiplomScript,"Segoe Script",cursive;font-size:32pt;font-weight:400;line-height:1.1;max-height:20mm;overflow:hidden;overflow-wrap:anywhere}.certificate .wording{position:absolute;top:220mm;left:10mm;width:190mm;margin:0;font-family:DiplomFraktur,"Old English Text MT",Georgia,serif;font-size:13.5pt;font-weight:700;line-height:1.4}.certificate .finish-time{position:absolute;top:241mm;left:10mm;width:190mm;margin:0;font-family:DiplomScript,"Segoe Script",cursive;font-size:29pt;line-height:1.1}.certificate .forest{position:absolute;right:0;bottom:0;left:0;width:210mm;height:39mm;object-fit:cover}
+@media(max-width:1100px){.workspace{grid-template-columns:280px minmax(0,1fr)}.controls{padding:16px}.preview-area{padding:16px 8px}.certificate{zoom:.78}}@media(max-width:760px){.workspace{display:block}.controls{border-right:0;border-bottom:1px solid var(--line)}.roster{max-height:220px}.preview-bar{padding:0 8px}.certificate{zoom:.56}.preview-area{overflow:auto}.toolbar{padding:15px}}
+@media(max-width:470px){.certificate{zoom:.38}}
+@page{size:A4 portrait;margin:0}
+@media print{html,body{width:210mm;margin:0;padding:0;background:#fff!important}.toolbar,.controls,.preview-bar,.empty{display:none!important}.workspace,.preview-area,#certificatePages{display:block!important;width:210mm;margin:0;padding:0;background:#fff!important}.certificate,.certificate.active{display:block!important;width:210mm!important;height:297mm!important;margin:0!important;border:0!important;box-shadow:none!important;zoom:1!important;break-inside:avoid;page-break-inside:avoid;break-after:page;page-break-after:always}.certificate:last-child{break-after:auto;page-break-after:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="toolbar"><div><h1>Diplomer</h1><p>Stoltzekleiven Opp · ett A4-ark per deltaker med sluttid</p></div><a href="results_viewer.html">← Resultater</a></header>
+  <main class="workspace">
+    <aside class="controls" aria-label="Diplomvalg">
+      <h2>Tilpass diplomene</h2>
+      <div class="control"><label for="year">Løpsår</label><input id="year" type="number" min="2000" max="2100" value="2026"></div>
+      <div class="control"><label for="heroUpload">Bilde øverst</label><input id="heroUpload" type="file" accept="image/jpeg,image/png,image/webp"><p class="hint">Valgfritt. Standardbildet kommer fra vedlagt diplom. Et valgt bilde brukes bare i denne nettleseren og lastes ikke opp.</p></div>
+      <div class="control"><label for="csvUpload">Resultatfil (valgfritt)</label><input id="csvUpload" type="file" accept=".csv,text/csv"><p class="hint">Siden henter normalt <code>results.csv</code> automatisk. Velg en fil hvis du vil bruke et annet løp.</p></div>
+      <div class="actions"><button id="refresh" type="button">↻ Hent siste resultater</button><button id="selectAll" type="button">Velg viste</button><button id="clearAll" type="button">Fjern viste</button></div>
+      <p id="status" class="status" role="status" aria-live="polite">Henter resultater …</p>
+      <div class="control"><label for="search">Søk etter deltaker</label><input id="search" type="search" placeholder="Navn …"></div>
+      <div class="control"><label for="filterGender">Kjønn</label><select id="filterGender"><option value="">Alle kjønn</option><option value="Dame">Kvinner</option><option value="Mann">Menn</option></select></div>
+      <div class="control"><label for="sortTime">Sorter diplomer</label><select id="sortTime"><option value="name">Navn (A–Å)</option><option value="time-asc">Tid · raskest først</option><option value="time-desc">Tid · langsomst først</option></select><p class="hint">Filter og sortering gjelder både forhåndsvisning og utskrift.</p></div>
+      <div class="list-header"><span>Deltakere med sluttid</span><span id="selectedCount">0 valgt</span></div>
+      <div id="roster" class="roster" role="group" aria-label="Velg deltakere"></div>
+      <button id="print" class="print-button" type="button" disabled>Skriv ut valgte diplomer</button>
+      <p class="hint">I utskriftsdialogen: velg A4 og 100 % skalering. Hvert diplom er låst til én side. Du kan velge «Lagre som PDF» i stedet for skriver.</p>
+    </aside>
+    <section class="preview-area" aria-label="Forhåndsvisning">
+      <div class="preview-bar"><h2>Forhåndsvisning</h2><div class="pager"><button id="previous" type="button" aria-label="Forrige diplom">←</button><span id="pagePosition">0 av 0</span><button id="next" type="button" aria-label="Neste diplom">→</button></div></div>
+      <div id="empty" class="empty">Velg minst én deltaker med sluttid for å se et diplom.</div>
+      <div id="certificatePages"></div>
+    </section>
+  </main>
+</div>
+<template id="certificateTemplate"><article class="certificate" aria-label="Diplom"><h2 class="title">Stoltzekleiven Opp <span class="year"></span></h2><figure class="hero"><img class="hero-image" alt="Løpere på Stoltzen"></figure><p class="slogan">Verdens bratteste motbakkeløp</p><p class="award">Diplom tildeles</p><strong class="recipient"></strong><p class="wording">For eksemplarisk innsats i årets syrefest,<br>med den magiske tiden</p><p class="finish-time"></p><img class="forest" src="assets/diplom-sti.jpg" alt=""></article></template>
+<script src="highlights.js?v=1"></script>
+<script src="diplomas.js?v=2"></script>
+<script>
+const D=window.StoltzenDiplomas;
+const state={entries:[],selected:new Set(),page:0,hero:"assets/diplom-lopere.jpg",uploadedHero:null};
+const byId=id=>document.getElementById(id);
+function setStatus(message,error=false){const element=byId("status");element.textContent=message;element.classList.toggle("error",error)}
+function visibleEntries(){return D.filterAndSort(state.entries,{gender:byId("filterGender").value,sort:byId("sortTime").value,query:byId("search").value})}
+function selectedEntries(){return visibleEntries().filter(entry=>state.selected.has(entry.id))}
+function renderRoster(){const roster=byId("roster");roster.replaceChildren();const fragment=document.createDocumentFragment();for(const entry of visibleEntries()){const label=document.createElement("label");label.className="person";const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=state.selected.has(entry.id);checkbox.addEventListener("change",()=>{if(checkbox.checked)state.selected.add(entry.id);else state.selected.delete(entry.id);state.page=0;renderCertificates()});const name=document.createElement("span");name.className="name";name.textContent=entry.name;const time=document.createElement("span");time.className="time";time.textContent=entry.time;label.append(checkbox,name,time);fragment.append(label)}roster.append(fragment)}
+function showPage(){const pages=[...byId("certificatePages").children];if(state.page>=pages.length)state.page=Math.max(0,pages.length-1);pages.forEach((page,index)=>page.classList.toggle("active",index===state.page));byId("pagePosition").textContent=pages.length?`${state.page+1} av ${pages.length}`:"0 av 0";byId("previous").disabled=state.page<=0;byId("next").disabled=state.page>=pages.length-1}
+function renderCertificates(){const entries=selectedEntries(),container=byId("certificatePages"),fragment=document.createDocumentFragment(),year=byId("year").value.trim()||"2026";for(const entry of entries){const sheet=byId("certificateTemplate").content.firstElementChild.cloneNode(true);sheet.querySelector(".year").textContent=year;sheet.querySelector(".recipient").textContent=entry.name;sheet.querySelector(".recipient").style.fontSize=D.nameSize(entry.name);sheet.querySelector(".finish-time").textContent=entry.time;sheet.querySelector(".hero-image").src=state.hero;sheet.setAttribute("aria-label",`Diplom til ${entry.name}`);fragment.append(sheet)}container.replaceChildren(fragment);byId("selectedCount").textContent=`${entries.length} valgt`;byId("print").disabled=!entries.length;byId("empty").hidden=Boolean(entries.length);showPage();renderRoster()}
+function useCsv(csv,source){state.entries=D.finishedParticipants(csv);state.selected=new Set(state.entries.map(entry=>entry.id));state.page=0;renderCertificates();setStatus(`${state.entries.length} deltakere med sluttid fra ${source}. Deltakere uten sluttid er utelatt.`)}
+async function refresh(){setStatus("Henter siste resultater …");try{const response=await fetch("results.csv?t="+Date.now(),{cache:"no-store"});if(!response.ok)throw Error("HTTP "+response.status);useCsv(await response.text(),"results.csv")}catch(error){setStatus("Kunne ikke hente results.csv. Start live-serveren eller velg en CSV-fil.",true)}}
+byId("refresh").addEventListener("click",refresh);
+byId("csvUpload").addEventListener("change",async event=>{const file=event.target.files[0];if(!file)return;try{useCsv(await file.text(),file.name)}catch(error){setStatus("Kunne ikke lese CSV-filen.",true)}});
+byId("heroUpload").addEventListener("change",event=>{const file=event.target.files[0];if(!file)return;if(!["image/jpeg","image/png","image/webp"].includes(file.type)){setStatus("Velg et JPG-, PNG- eller WebP-bilde.",true);event.target.value="";return}if(state.uploadedHero)URL.revokeObjectURL(state.uploadedHero);state.uploadedHero=URL.createObjectURL(file);state.hero=state.uploadedHero;renderCertificates();setStatus("Bildet er byttet lokalt. Det sendes ikke til serveren.")});
+byId("year").addEventListener("change",renderCertificates);
+byId("search").addEventListener("input",()=>{state.page=0;renderCertificates()});
+byId("filterGender").addEventListener("change",()=>{state.page=0;renderCertificates()});
+byId("sortTime").addEventListener("change",()=>{state.page=0;renderCertificates()});
+byId("selectAll").addEventListener("click",()=>{for(const entry of visibleEntries())state.selected.add(entry.id);state.page=0;renderCertificates()});
+byId("clearAll").addEventListener("click",()=>{for(const entry of visibleEntries())state.selected.delete(entry.id);state.page=0;renderCertificates()});
+byId("previous").addEventListener("click",()=>{state.page--;showPage()});
+byId("next").addEventListener("click",()=>{state.page++;showPage()});
+byId("print").addEventListener("click",async()=>{if(!selectedEntries().length)return;await Promise.all([...byId("certificatePages").querySelectorAll("img")].map(image=>image.decode?image.decode().catch(()=>{}):Promise.resolve()));if(document.fonts?.ready)await document.fonts.ready;window.print()});
+refresh();
+</script>
+</body>
+</html>

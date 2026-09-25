@@ -156,11 +156,13 @@ http://stoltzen.no/statistikk/stat.php?id=67890
 - **Oppslagsmodus**: Søk, filtre, statistikk, sortering og komplett resultattabell
 - **Scenemodus**: Projektortilpasset visning med mellomtider, tidligere bestetid,
   antall deltakelser og automatisk siderotasjon
-- **Oversikter**: Egen side med første målpassering, raskeste strekktid opp
-  trappene, topp fem kvinner og menn, største personlige forbedring i tid og
-  prosent og en indikasjon på hvem som startet for hardt
-- **Fullskjerm**: Egen knapp eller hurtigtasten `F`
-- **Hurtigtaster**: `1` for oppslag, `2` for scene og piltaster for scenesider
+- **Oversikter**: Topp fem for første målpasseringer, raskeste strekktider opp
+  trappene, kvinner, menn, personlige forbedringer i tid og prosent, største
+  tidsavvik over tidligere bestetid og en indikasjon på hard start
+- **Diplomer**: Utskrift av ett A4-diplom per deltaker med sluttid, med navn,
+  tid, valgfritt år og et bilde som kan byttes lokalt
+- **Fullskjerm**: Egen knapp eller hurtigtasten `F`; beholdes når du bytter mellom scene og oversikter
+- **Hurtigtaster**: `1` for oppslag, `2` for scene, `3` for oversikter og piltaster for scenesider
 - **Manuell reserve**: Drag-and-drop eller filvelger ligger skjult under manuell CSV
 - **Komplett filtrering**: Søk, gruppe, klasse og ny bestetid filtre
 - **Sortering**: Klikk på kolonneheader for å sortere
@@ -174,12 +176,34 @@ http://stoltzen.no/statistikk/stat.php?id=67890
 3. La konsollvinduet stå åpent mens resultatene skal oppdateres
 
 Åpne `Oversikter` fra resultatvisningen, eller gå til
-`http://127.0.0.1:8765/oversikter.html`. Siden oppdateres hvert 30. sekund.
+`http://127.0.0.1:8765/oversikter.html` (videresendes til resultatvisningens
+oversiktsmodus). Oversiktene oppdateres hvert 30. sekund.
+Antall på startlisten gjelder den sammenhengende COWI-startrekken; enkeltstående
+COWI-merkede startnumre utenfor rekken tas ikke med. «I mål» teller bare
+registrerte måltider, ikke mellompasseringer. Lister med færre enn fem
+kvalifiserte løpere viser bare de som finnes.
 Trappetiden er EQ Timings strekktid fra Halvveis til Trappene. «Startet for hardt»
 er en indikasjon basert på tid til Starten sammenlignet med resten av løpet,
 normalisert mot medianen i samme gruppe. Den vises først når minst fem løpere
 i gruppen har både mellomtid og sluttid.
 4. Bruk den sammenfoldede manuelle CSV-velgeren bare dersom du vil vise en annen fil
+
+### Skriv ut diplomer
+
+Åpne `Diplomer` fra resultatvisningen, eller gå til
+`http://127.0.0.1:8765/diplomer.html`. Siden henter `results.csv` og velger
+automatisk alle deltakere med registrert sluttid; startende uten tid får ikke
+diplom. Du kan filtrere på kvinner/menn, søke på navn og sortere diplomene etter
+tid (raskest eller langsomst først). Filter og sortering styrer både forhåndsvisning
+og utskrift; «Velg viste» og «Fjern viste» gjelder det filtrerte utvalget. Du kan
+også velge enkeltpersoner, angi løpsår og bytte bildet øverst med et lokalt
+JPG-, PNG- eller WebP-bilde. Bildet lastes ikke opp til serveren.
+
+Velg **Skriv ut valgte diplomer** og bruk A4 med 100 % skalering. Utskriftsstilen
+gir ett diplom per ark uten sideskift midt i diplomet. Skriverdialogen kan også
+lagre diplomene som PDF. Standardbildene er hentet fra det vedlagte diplomet.
+Skrifttypene UnifrakturCook og Great Vibes lagres lokalt og har SIL Open Font
+License 1.1; lisensene ligger i `assets/fonts/`.
 
 ### Direkte Python-kommandoer
 
@@ -253,6 +277,9 @@ stoltzen-result-scraper/
 ├── run_stat_scraper.bat             # Batch for stat URL scraper
 ├── run_scraper_advanced.bat         # Avansert Windows batch med meny
 ├── results_viewer.html              # HTML-visning av resultater (laster data fra results.csv)
+├── diplomer.html                    # A4-diplomer med utskrift og bildevalg
+├── diplomas.js                      # Utvalg av deltakere med sluttid
+├── assets/                          # Standardbilder hentet fra vedlagt diplom
 ├── .gitignore                       # Git ignore-regler
 ├── results.csv                      # Siste kjørte resultater (ikke i Git)
 └── README.md                        # Denna filen

@@ -50,19 +50,26 @@
   function calculate(rows) {
     const finished = rows.filter(row => seconds(row.tid) !== null);
     const fastest = (items, field) => [...items].sort((a, b) => seconds(a[field]) - seconds(b[field]) || a.navn.localeCompare(b.navn, "nb"));
-    const firstFinisher = finished.filter(row => Number.isFinite(Date.parse(row.maalpassering)))
-      .sort((a, b) => Date.parse(a.maalpassering) - Date.parse(b.maalpassering))[0] || null;
+    const firstFinishers = finished.filter(row => Number.isFinite(Date.parse(row.maalpassering)))
+      .sort((a, b) => Date.parse(a.maalpassering) - Date.parse(b.maalpassering)
+        || a.navn.localeCompare(b.navn, "nb")).slice(0, 5);
     const stairRunners = rows.filter(row => seconds(row.trappetid) !== null);
-    const fastestStairs = fastest(stairRunners, "trappetid")[0] || null;
-    const improvements = finished.map(row => {
+    const fastestStairsRunners = fastest(stairRunners, "trappetid").slice(0, 5);
+    const comparisons = finished.map(row => {
       const previous = seconds(row.bestetidligere || row.bestetid);
       const current = seconds(row.tid);
-      if (previous === null || current >= previous) return null;
-      return { runner: row, improvementSeconds: previous - current,
-        improvementPercent: (previous - current) / previous * 100 };
+      if (previous === null) return null;
+      return { runner: row, differenceSeconds: current - previous,
+        differencePercent: (current - previous) / previous * 100 };
     }).filter(Boolean);
-    const biggestByTime = [...improvements].sort((a, b) => b.improvementSeconds - a.improvementSeconds)[0] || null;
-    const biggestByPercent = [...improvements].sort((a, b) => b.improvementPercent - a.improvementPercent)[0] || null;
+    const nameOrder = (a, b) => a.runner.navn.localeCompare(b.runner.navn, "nb");
+    const improvements = comparisons.filter(item => item.differenceSeconds < 0);
+    const biggestByTime = [...improvements]
+      .sort((a, b) => a.differenceSeconds - b.differenceSeconds || nameOrder(a, b)).slice(0, 5);
+    const biggestByPercent = [...improvements]
+      .sort((a, b) => a.differencePercent - b.differencePercent || nameOrder(a, b)).slice(0, 5);
+    const worstByTime = comparisons.filter(item => item.differenceSeconds > 0)
+      .sort((a, b) => b.differenceSeconds - a.differenceSeconds || nameOrder(a, b)).slice(0, 5);
 
     const pacingGroups = new Map();
     for (const row of finished) {
@@ -88,7 +95,7 @@
     return {
       participantCount: rows.length,
       finishedCount: finished.length,
-      firstFinisher, fastestStairs, biggestByTime, biggestByPercent,
+      firstFinishers, fastestStairsRunners, biggestByTime, biggestByPercent, worstByTime,
       topMen: fastest(finished.filter(row => row.gruppe === "Mann"), "tid").slice(0, 5),
       topWomen: fastest(finished.filter(row => row.gruppe === "Dame"), "tid").slice(0, 5),
       hardStarters: hardStarters.slice(0, 5), eligibleHardCount,

@@ -231,9 +231,11 @@ def parse_eq_rows(payload: Any, *, source: str = "result") -> List[Dict[str, Any
         class_text = _class_text(row)
         time_value = _first(row, "Time", "ResultTime", "FinishTime", "NetTime", "GunTime", "Result", "ResultValue", "TimeString", "Formatert", "Formatted", "FormattedResult")
         parsed_time = parse_time(time_value)
-        # EQ Timing may expose 0:00 for a participant without a valid finish.
-        # It must not count as a result or a personal best.
-        if time_to_seconds(parsed_time) == 0:
+        # Result/Search also returns checkpoint passages (including Start) in
+        # Formatert. Only a finish-station passage is a completed result.
+        station = original.get("StasjonsOppsett") if isinstance(original, Mapping) else None
+        if (time_to_seconds(parsed_time) == 0
+                or (isinstance(station, Mapping) and station.get("Er_stopp") is False)):
             parsed_time = None
         parsed.append({
             "_uid": _uid(row),
@@ -257,7 +259,9 @@ def _main_start_block(rows: Sequence[Mapping[str, Any]]) -> Optional[Tuple[int, 
         return None
     blocks: List[List[int]] = [[numbers[0]]]
     for number in numbers[1:]:
-        if number == blocks[-1][-1] + 1:
+        # A single missing bib must not split one otherwise consecutive club
+        # start wave into two separate blocks.
+        if number <= blocks[-1][-1] + 2:
             blocks[-1].append(number)
         else:
             blocks.append([number])

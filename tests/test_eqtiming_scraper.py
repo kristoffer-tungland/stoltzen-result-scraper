@@ -150,6 +150,19 @@ class EqtimingParserTests(unittest.TestCase):
         }]}
         self.assertIsNone(parse_eq_rows(payload)[0]["Tid"])
 
+    def test_start_passage_is_not_a_finish_time(self):
+        payload = {"Items": [{
+            "Deltaker": {"UID": 12, "Utover": {"NavnFormatert": "Ikke startet"}},
+            "StasjonsOppsett": {"Navn": "Start", "Er_stopp": False},
+            "Formatert": "4:52",
+            "StatusTekst": "TIME",
+        }]}
+        row = parse_eq_rows(payload)[0]
+        self.assertIsNone(row["Tid"])
+        output = build_output_rows([row], 2026, no_history=True)[0]
+        self.assertEqual(output["Deltagelser"], 0)
+        self.assertIsNone(output["Bestetid"])
+
     def test_participation_count_uses_current_year_when_stoltzen_has_it(self):
         html = """
         <div id="participations">4</div>
@@ -262,6 +275,10 @@ class EqtimingParserTests(unittest.TestCase):
         rows = [{"_start_number": number} for number in (100, 101, 200, 201)]
         self.assertIsNone(_main_start_block(rows))
         self.assertIsNone(_main_start_block([{"_start_number": None}]))
+
+    def test_start_block_keeps_adjacent_cowi_runs_with_one_missing_number(self):
+        rows = [{"_start_number": number} for number in (*range(5951, 5974), *range(5975, 6061), 4842, 9001)]
+        self.assertEqual(_main_start_block(rows), (5951, 6060))
 
     def test_finished_result_carries_highlight_fields_into_csv_rows(self):
         class Scraper(EqtimingScraper):
