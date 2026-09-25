@@ -136,7 +136,12 @@ http://stoltzen.no/statistikk/stat.php?id=67890
 
 **Funksjoner:**
 - **Live-oppdatering**: Henter ny `results.csv` automatisk hvert 30. sekund
+- **Pause/start live**: Slå automatisk oppdatering av og på uten å stoppe serveren
 - **Oppdater nå**: Knapp for å hente siste data umiddelbart
+- **Oppslagsmodus**: Søk, filtre, statistikk, sortering og komplett resultattabell
+- **Scenemodus**: Projektortilpasset visning med store resultater og automatisk siderotasjon
+- **Fullskjerm**: Egen knapp eller hurtigtasten `F`
+- **Hurtigtaster**: `1` for oppslag, `2` for scene og piltaster for scenesider
 - **Manuell reserve**: Drag-and-drop eller filvelger ligger skjult under manuell CSV
 - **Komplett filtrering**: Søk, gruppe, klasse og ny bestetid filtre
 - **Sortering**: Klikk på kolonneheader for å sortere

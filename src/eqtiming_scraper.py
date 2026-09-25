@@ -494,7 +494,7 @@ def build_output_rows(eq_rows: Sequence[Mapping[str, Any]], current_year: int, h
             "Deltagelser": previous.get("Deltagelser", 0) + (1 if current else 0),
             "BesteTidligere": best,
             "BesteÅr": previous.get("BesteÅr"),
-            "NyBestetid": bool(current and (not best or (time_to_seconds(current) is not None and time_to_seconds(best) is not None and time_to_seconds(current) < time_to_seconds(best)))),
+            "NyBestetid": bool(current and best and time_to_seconds(current) is not None and time_to_seconds(best) is not None and time_to_seconds(current) < time_to_seconds(best)),
             "Differanse": calculate_difference(current, best),
         })
     group_order = {"Dame": 1, "Mann": 2, "Pluss": 3}

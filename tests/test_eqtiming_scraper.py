@@ -100,6 +100,14 @@ class EqtimingParserTests(unittest.TestCase):
     def test_difference(self):
         self.assertEqual(calculate_difference("12:00", "11:45"), "+0:15")
 
+    def test_first_time_participant_is_not_marked_as_new_best(self):
+        rows = [{"Navn": "Ny Deltaker", "Tid": "15:00", "Klasse": "Menn", "Gruppe": "Mann"}]
+        output = build_output_rows(rows, 2026, FixtureHistory())
+        self.assertEqual(output[0]["Deltagelser"], 1)
+        self.assertIsNone(output[0]["BesteTidligere"])
+        self.assertEqual(output[0]["NyBestetid"], False)
+        self.assertIsNone(output[0]["Differanse"])
+
     def test_zero_time_is_not_a_finished_result(self):
         payload = {"Items": [{
             "Deltaker": {
