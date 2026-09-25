@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#181818">
+<title>Stoltzen · Løpets oversikter</title>
+<style>
+:root{color-scheme:dark;--bg:#181818;--panel:#242424;--panel2:#303030;--line:#484848;--text:#fff;--muted:#b9b9b9;--accent:#f04e23;--accent-light:#ff8060;--radius:18px}
+*{box-sizing:border-box}body{min-width:320px;min-height:100vh;margin:0;color:var(--text);background:radial-gradient(circle at 0 0,#f04e2324,transparent 34rem),radial-gradient(circle at 100% 0,#58595b36,transparent 32rem),var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45}a{color:inherit}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.app{width:min(1600px,calc(100% - 32px));margin:16px auto;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:rgba(36,36,36,.95);box-shadow:0 24px 60px #0008}.header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:23px 30px;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:14px}.mark{display:grid;place-items:center;width:50px;height:50px;border-radius:15px;background:linear-gradient(135deg,var(--accent),var(--accent-light));font-size:1.5rem}.eyebrow{margin:0 0 3px;color:var(--accent-light);font-size:.72rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}h1{margin:0;font-size:clamp(1.5rem,2.6vw,2.2rem);letter-spacing:-.04em}.subtitle{margin:3px 0 0;color:var(--muted);font-size:.9rem}.nav{display:flex;gap:5px;padding:4px;border:1px solid var(--line);border-radius:12px;background:#0003}.nav a{padding:9px 14px;border-radius:9px;color:var(--muted);font-size:.86rem;font-weight:800;text-decoration:none}.nav a:hover{color:var(--text);background:#fff1}.nav a.active{color:#fff;background:var(--accent)}
+.livebar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 30px;border-bottom:1px solid var(--line);background:#0002}.status{color:var(--muted);font-size:.85rem}.status:before{display:inline-block;width:9px;height:9px;margin-right:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px #f04e2324;content:""}.status.error{color:#ff9a83}.status.error:before{background:#ff9a83}.actions{display:flex;gap:8px}.actions button{padding:8px 13px;border:1px solid #f04e2366;border-radius:9px;color:var(--accent-light);background:#f04e2317;font-size:.82rem;font-weight:800}.actions button:hover{background:#f04e2330}
+.content{padding:30px}.intro{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:26px}.intro h2{margin:0;font-size:clamp(1.6rem,3.1vw,2.6rem);letter-spacing:-.045em}.intro p{margin:4px 0 0;color:var(--muted)}.counter{display:flex;gap:22px;white-space:nowrap}.counter strong{display:block;color:var(--accent-light);font-size:clamp(1.7rem,3vw,2.7rem);line-height:1}.counter span{color:var(--muted);font-size:.72rem;font-weight:800;text-transform:uppercase}
+.features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.feature,.board,.analysis{border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(145deg,#303030,#222)}.feature{min-height:235px;padding:22px;overflow:hidden}.feature:first-child{border-color:#f04e2370;background:radial-gradient(circle at 100% 0,#f04e232e,transparent 15rem),linear-gradient(145deg,#35302e,#222)}.label{margin:0 0 18px;color:var(--accent-light);font-size:.76rem;font-weight:850;letter-spacing:.1em;text-transform:uppercase}.feature .name{margin:0 0 8px;font-size:clamp(1.2rem,1.9vw,1.8rem);font-weight:850;line-height:1.15;overflow-wrap:anywhere}.feature .value{display:block;color:#fff;font-size:clamp(1.7rem,2.6vw,2.5rem);font-weight:900;letter-spacing:-.045em}.detail{margin:8px 0 0;color:var(--muted);font-size:.88rem}.empty{color:var(--muted);font-size:.96rem;line-height:1.5}
+.boards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}.board,.analysis{padding:22px}.board h3,.analysis h3{margin:0 0 17px;font-size:1.35rem;letter-spacing:-.03em}.rank-list{margin:0;padding:0;list-style:none}.rank-list li{display:grid;grid-template-columns:2.6rem minmax(0,1fr) auto;align-items:center;gap:12px;min-height:53px;border-top:1px solid #ffffff18}.rank-list li:first-child{border-top:0}.place{color:var(--accent-light);font-size:1.1rem;font-weight:900}.runner{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:750}.result{color:var(--accent-light);font-weight:850;white-space:nowrap}.analysis{margin-top:18px}.analysis-head{display:flex;align-items:start;justify-content:space-between;gap:20px}.analysis-head p{max-width:780px;margin:0 0 14px;color:var(--muted);font-size:.88rem}.analysis .rank-list{max-width:950px}.method{margin:20px 0 0;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.82rem}.sources{margin:24px 0 0;color:var(--muted);font-size:.8rem}.sources a{color:var(--accent-light)}
+@media(max-width:1100px){.features{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.header,.livebar,.intro{align-items:flex-start;flex-direction:column}.header,.livebar{padding-inline:18px}.content{padding:20px 16px}.features,.boards{grid-template-columns:1fr}.feature{min-height:190px}.counter{gap:30px}.actions{width:100%}.actions button{flex:1}}@media(display-mode:fullscreen){.app{width:100%;min-height:100vh;margin:0;border:0;border-radius:0}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="brand"><div class="mark" aria-hidden="true">▲</div><div><p class="eyebrow">COWI · Stoltzekleiven Opp</p><h1>Resultater</h1><p class="subtitle">Live oversikter fra løpet</p></div></div>
+    <nav class="nav" aria-label="Sider"><a href="results_viewer.html">Resultater</a><a class="active" aria-current="page" href="oversikter.html">Oversikter</a></nav>
+  </header>
+  <div class="livebar"><div id="status" class="status" role="status" aria-live="polite">Henter resultater …</div><div class="actions"><button id="toggleLive" type="button">⏸ Pause live</button><button id="refreshNow" type="button">↻ Oppdater nå</button></div></div>
+  <main class="content">
+    <div class="intro"><div><p class="eyebrow">Løpets øyeblikk</p><h2>Hvem utmerker seg?</h2><p>Oversiktene fylles ut etter hvert som passeringer og sluttider registreres.</p></div><div class="counter"><div><strong id="participantCount">0</strong><span>på startlisten</span></div><div><strong id="finishedCount">0</strong><span>i mål</span></div></div></div>
+    <section class="features" aria-label="Høydepunkter">
+      <article class="feature"><p class="label">Først i mål</p><div id="firstFinish" class="empty">Venter på målpassering.</div></article>
+      <article class="feature"><p class="label">Raskest opp trappene</p><div id="fastestStairs" class="empty">Venter på passering ved Trappene.</div></article>
+      <article class="feature"><p class="label">Største pers · tid</p><div id="bestImprovementTime" class="empty">Venter på ny personlig rekord.</div></article>
+      <article class="feature"><p class="label">Største pers · prosent</p><div id="bestImprovementPercent" class="empty">Venter på ny personlig rekord.</div></article>
+    </section>
+    <section class="boards" aria-label="Topp fem"><article class="board"><h3>Topp fem menn</h3><ol id="topMen" class="rank-list"></ol></article><article class="board"><h3>Topp fem kvinner</h3><ol id="topWomen" class="rank-list"></ol></article></section>
+    <section class="analysis" aria-labelledby="hardStartTitle"><div class="analysis-head"><div><h3 id="hardStartTitle">Hvem startet for hardt?</h3><p>Løpere som var relativt raske frem til Starten, men brukte relativt mer tid på resten av løypa enn andre i samme gruppe.</p></div></div><ol id="hardStarters" class="rank-list"></ol><p class="method">Indikasjon, ikke fasit: Vi sammenligner tiden til Starten og tiden derfra til mål med medianen for hver del blant minst fem fullførte i samme gruppe. Listen viser bare løpere der siste del var minst 10 % tregere relativt til gruppen enn første del.</p></section>
+    <p class="sources">Årets tider: <a href="https://live.eqtiming.com/78640" target="_blank" rel="noopener">EQ Timing</a>. Tidligere bestetider: Stoltzen-statistikken.</p>
+  </main>
+</div>
+<script src="highlights.js?v=1"></script>
+<script>
+const H = window.StoltzenHighlights;
+let autoRefresh = true, refreshing = false, lastUpdate = "";
+const intervalMs = 30000;
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
+function text(id,value){document.getElementById(id).textContent=value}
+function setHtml(id,value){document.getElementById(id).innerHTML=value}
+function feature(name,value,detail){return '<p class="name">'+escapeHtml(name)+'</p><strong class="value">'+escapeHtml(value)+'</strong><p class="detail">'+escapeHtml(detail)+'</p>'}
+function empty(message){return '<p class="empty">'+escapeHtml(message)+'</p>'}
+function clock(value){const match=String(value||"").match(/T(\d{2}:\d{2}:\d{2})/);return match?match[1]:"Klokkeslett ukjent"}
+function duration(total){return Math.floor(total/60)+":"+String(total%60).padStart(2,"0")}
+function percent(value){return value.toLocaleString("nb-NO",{minimumFractionDigits:1,maximumFractionDigits:1})+" %"}
+function ranking(rows,field){if(!rows.length)return '<li class="empty">Ingen sluttider registrert ennå.</li>';return rows.map((row,index)=>'<li><span class="place">'+(index+1)+'</span><span class="runner">'+escapeHtml(row.navn||"Ukjent")+'</span><span class="result">'+escapeHtml(row[field]||"–")+'</span></li>').join("")}
+function render(data){
+  text("participantCount",data.participantCount);text("finishedCount",data.finishedCount);
+  setHtml("firstFinish",data.firstFinisher?feature(data.firstFinisher.navn,data.firstFinisher.tid,"Målpassering kl. "+clock(data.firstFinisher.maalpassering)):empty("Venter på første registrerte målpassering."));
+  setHtml("fastestStairs",data.fastestStairs?feature(data.fastestStairs.navn,data.fastestStairs.trappetid,"Strekktid fra Halvveis til Trappene"):empty("Venter på passering ved Trappene."));
+  setHtml("bestImprovementTime",data.biggestByTime?feature(data.biggestByTime.runner.navn,"−"+duration(data.biggestByTime.improvementSeconds),"Fra "+data.biggestByTime.runner.bestetidligere+" til "+data.biggestByTime.runner.tid):empty("Ingen ny personlig rekord registrert ennå."));
+  setHtml("bestImprovementPercent",data.biggestByPercent?feature(data.biggestByPercent.runner.navn,percent(data.biggestByPercent.improvementPercent),"Fra "+data.biggestByPercent.runner.bestetidligere+" til "+data.biggestByPercent.runner.tid):empty("Ingen ny personlig rekord registrert ennå."));
+  setHtml("topMen",ranking(data.topMen,"tid"));setHtml("topWomen",ranking(data.topWomen,"tid"));
+  setHtml("hardStarters",data.hardStarters.length?data.hardStarters.map((entry,index)=>'<li><span class="place">'+(index+1)+'</span><span class="runner">'+escapeHtml(entry.runner.navn)+'</span><span class="result">+'+percent(entry.score*100)+'</span></li>').join(""):'<li class="empty">'+(data.eligibleHardCount?"Ingen tydelig hard start så langt.":"Venter på minst fem fullførte med Starten-passering i samme gruppe.")+'</li>');
+}
+function updateToggle(){text("toggleLive",autoRefresh?"⏸ Pause live":"▶ Start live")}
+async function refresh(force=false){if(refreshing||(!autoRefresh&&!force))return;refreshing=true;text("status","Henter siste resultater …");try{const response=await fetch("results.csv?t="+Date.now(),{cache:"no-store"});if(!response.ok)throw Error("HTTP "+response.status);const csv=await response.text();const rows=H.parseCsv(csv);render(H.calculate(rows));lastUpdate=new Date().toLocaleTimeString("nb-NO");const missing=["Maalpassering","Trappetid","StartenTid"].filter(field=>!csv.split(/\r?\n/,1)[0].includes(field));const status=document.getElementById("status");status.classList.toggle("error",missing.length>0);status.textContent=missing.length?"Serveren skriver gammel CSV. Start F5-serveren på nytt for alle oversikter.":(autoRefresh?"Live · sist oppdatert ":"Oppdatert ")+lastUpdate+(autoRefresh?" · automatisk hvert 30. sekund":" · live-oppdatering pauset")}catch(error){const status=document.getElementById("status");status.classList.add("error");status.textContent="Kunne ikke hente resultater. Kontroller at live-serveren kjører."}finally{refreshing=false}}
+document.getElementById("toggleLive").addEventListener("click",()=>{autoRefresh=!autoRefresh;updateToggle();if(autoRefresh)refresh(true);else text("status","Live-oppdatering pauset"+(lastUpdate?" · sist oppdatert "+lastUpdate:""))});
+document.getElementById("refreshNow").addEventListener("click",()=>refresh(true));
+refresh();window.setInterval(()=>refresh(),intervalMs);
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Stoltzen: Installer avhengigheter",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/.vscode/setup_environment.ps1",
+        "-BootstrapPython",
+        "${command:python.interpreterPath}",
+        "-WorkspaceRoot",
+        "${workspaceFolder}"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "clear": false
+      }
+    }
+  ]
+}

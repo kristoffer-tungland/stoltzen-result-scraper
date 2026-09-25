@@ -29,12 +29,17 @@ git clone <repository-url>
 cd stoltzen-result-scraper
 
 # Installer avhengigheter
-pip install -r requirements.txt
+python -m pip install -r src/requirements.txt
 ```
 
 ## Bruk
 
 ### EQ Timing 2026 (anbefalt)
+
+I VS Code kan live-visningen startes direkte med `F5`. Profilen
+`Stoltzen: Live-resultater 2026` oppretter automatisk et prosjektmiljø i `.venv`,
+installerer avhengighetene, starter serveren, oppdaterer data hvert 30. sekund og
+åpner nettsiden automatisk. Stopp med `Shift+F5`.
 
 Kjør den nye standardflyten fra prosjektmappen:
 
@@ -52,6 +57,12 @@ oppdatere nettleseren manuelt. La konsollvinduet stå åpent under løpet, og tr
 Resultater som ennå ikke har passert mål får tom `Tid`; de beholdes i CSV-en
 slik at startlisten kan vises før målgang. Historikk fra Stoltzen mellomlagres,
 slik at den ikke lastes ned på nytt ved hver oppdatering.
+
+Personoversikten viser kumulative mellomtider fra EQ Timings passeringer og
+tidligere bestetid fra Stoltzen. Nykommere har ingen tidligere bestetid.
+`Deltakelser` teller bare
+løp med sluttid. Årets løp legges til når EQ Timing har sluttid, men ikke dersom
+det samme året allerede er registrert med sluttid hos Stoltzen.
 
 Live-flyten kan også kjøres direkte med Python:
 
@@ -139,7 +150,11 @@ http://stoltzen.no/statistikk/stat.php?id=67890
 - **Pause/start live**: Slå automatisk oppdatering av og på uten å stoppe serveren
 - **Oppdater nå**: Knapp for å hente siste data umiddelbart
 - **Oppslagsmodus**: Søk, filtre, statistikk, sortering og komplett resultattabell
-- **Scenemodus**: Projektortilpasset visning med store resultater og automatisk siderotasjon
+- **Scenemodus**: Projektortilpasset visning med mellomtider, tidligere bestetid,
+  antall deltakelser og automatisk siderotasjon
+- **Oversikter**: Egen side med første målpassering, raskeste strekktid opp
+  trappene, topp fem kvinner og menn, største personlige forbedring i tid og
+  prosent og en indikasjon på hvem som startet for hardt
 - **Fullskjerm**: Egen knapp eller hurtigtasten `F`
 - **Hurtigtaster**: `1` for oppslag, `2` for scene og piltaster for scenesider
 - **Manuell reserve**: Drag-and-drop eller filvelger ligger skjult under manuell CSV
@@ -153,6 +168,13 @@ http://stoltzen.no/statistikk/stat.php?id=67890
 1. Kjør `run_eqtiming_2026.bat`
 2. Nettsiden åpnes automatisk og viser live-status øverst
 3. La konsollvinduet stå åpent mens resultatene skal oppdateres
+
+Åpne `Oversikter` fra resultatvisningen, eller gå til
+`http://127.0.0.1:8765/oversikter.html`. Siden oppdateres hvert 30. sekund.
+Trappetiden er EQ Timings strekktid fra Halvveis til Trappene. «Startet for hardt»
+er en indikasjon basert på tid til Starten sammenlignet med resten av løpet,
+normalisert mot medianen i samme gruppe. Den vises først når minst fem løpere
+i gruppen har både mellomtid og sluttid.
 4. Bruk den sammenfoldede manuelle CSV-velgeren bare dersom du vil vise en annen fil
 
 ### Direkte Python-kommandoer

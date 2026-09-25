@@ -23,8 +23,8 @@ import requests
 from bs4 import BeautifulSoup
 
 CSV_FIELDS = [
-    "Gruppe", "Navn", "Tid", "Klasse", "Deltagelser", "BesteTidligere",
-    "BesteÅr", "NyBestetid", "Differanse",
+    "Gruppe", "Navn", "Tid", "Mellomtider", "Klasse", "Deltagelser", "Bestetid", "BesteTidligere",
+    "BesteÅr", "NyBestetid", "Differanse", "Maalpassering", "Trappetid", "StartenTid",
 ]
 DEFAULT_EVENT_ID = "78640"
 DEFAULT_CLUB = "COWI"
@@ -261,12 +261,49 @@ def merge_eq_rows(results: Sequence[Mapping[str, Any]], startlist: Sequence[Mapp
     return [merged[item_key] for item_key in order]
 
 
+def parse_eq_details(payload: Any) -> Dict[str, str]:
+    """Extract cumulative checkpoints, stair segment and finish clock time."""
+    splits = []
+    details = {"Mellomtider": "", "Trappetid": "", "StartenTid": "", "Maalpassering": ""}
+    for item in _rows_from_payload(payload):
+        station = item.get("StasjonsOppsett") or {}
+        if not isinstance(station, Mapping):
+            continue
+        name = str(station.get("Navn") or "").strip()
+        if not name:
+            continue
+        elapsed = parse_time(item.get("Formatert"))
+        if not elapsed or time_to_seconds(elapsed) == 0:
+            continue
+        if str(item.get("StatusTekst") or "TIME").upper() != "TIME":
+            continue
+        if station.get("Er_stopp") or name.casefold() in ("mål", "mal", "finish"):
+            details["Maalpassering"] = str(
+                item.get("PasseringstidAsDateTime") or item.get("PasseringsTid") or ""
+            )
+            continue
+        splits.append((station.get("Sortering") or 0, name, elapsed))
+        if name.casefold() == "starten":
+            details["StartenTid"] = elapsed
+        if name.casefold() == "trappene":
+            segment = item.get("Splitt") or {}
+            if isinstance(segment, Mapping):
+                details["Trappetid"] = parse_time(segment.get("Formatert")) or ""
+    details["Mellomtider"] = " · ".join(f"{name} {elapsed}" for _, name, elapsed in sorted(splits))
+    return details
+
+
+def parse_eq_splits(payload: Any) -> str:
+    """Keep the existing cumulative split representation for the result table."""
+    return parse_eq_details(payload)["Mellomtider"]
+
+
 def parse_history_html(html: str, current_year: int) -> Dict[str, Any]:
-    """Extract best pre-current-year time and historical participation count."""
+    """Extract finish times and count completed years in Stoltzen statistics."""
     soup = BeautifulSoup(html or "", "html.parser")
     candidates: List[Tuple[int, str]] = []
     seen: set[Tuple[int, str]] = set()
-    all_years_seen: set[int] = set()
+    finished_years: set[int] = set()
 
     # Stoltzen embeds an authoritative year/final-time list in a commented
     # span. Reading it directly avoids confusing intermediate split times with
@@ -277,10 +314,11 @@ def parse_history_html(html: str, current_year: int) -> Dict[str, Any]:
     if year_times:
         for year_text, time_text in re.findall(r"(20\d{2})\s*\|\s*(\d{1,3}[.:]\d{2})", year_times.group(1)):
             year = int(year_text)
-            all_years_seen.add(year)
             history_time = parse_time(time_text)
-            if history_time and year < current_year:
-                candidates.append((year, history_time))
+            if history_time and time_to_seconds(history_time):
+                finished_years.add(year)
+                if year < current_year:
+                    candidates.append((year, history_time))
     else:
         containers = soup.select("#yeartimes, .yeartimes, #history, .history, #personal_best, #last_time, #participations, table")
         if not containers:
@@ -290,10 +328,11 @@ def parse_history_html(html: str, current_year: int) -> Dict[str, Any]:
             texts = [row.get_text(" ", strip=True) for row in rows] if rows else [container.get_text(" ", strip=True)]
             for text in texts:
                 years = [int(year) for year in re.findall(r"\b(20\d{2})\b", text)]
-                all_years_seen.update(years)
                 times = [parse_time(match.group(0)) for match in re.finditer(r"(?<!\d)\d{1,3}[:.]\d{2}(?:[:.]\d{1,2})?(?!\d)", text)]
                 times = [history_time for history_time in times if history_time]
                 for year, history_time in zip(years, times):
+                    if time_to_seconds(history_time):
+                        finished_years.add(year)
                     if year < current_year and (year, history_time) not in seen:
                         seen.add((year, history_time))
                         candidates.append((year, history_time))
@@ -307,16 +346,11 @@ def parse_history_html(html: str, current_year: int) -> Dict[str, Any]:
         count_match = re.search(r"\b(\d+)\b", participation_node.get_text(" ", strip=True))
         if count_match:
             explicit_count = int(count_match.group(1))
-    if explicit_count is not None:
-        # A profile can already contain the race year (for example when
-        # regression-testing 2025). Keep this value historical here because
-        # build_output_rows adds the current finished race exactly once.
-        current_or_future_entries = len({year for year in all_years_seen if year >= current_year})
-        participation_count = max(0, explicit_count - current_or_future_entries)
-    else:
-        participation_count = len(candidates)
+    participation_count = (len(finished_years) if year_times else
+                           explicit_count if explicit_count is not None else len(finished_years))
     return {"BesteTidligere": best_time, "BesteÅr": best_year,
             "Deltagelser": participation_count,
+            "ÅretsTidRegistrert": current_year in finished_years,
             "history": candidates}
 
 
@@ -417,7 +451,8 @@ class StoltzenHistory:
         if not profile_url:
             profile_url, direct_html = self._search_page(name)
         if not profile_url:
-            result = {"BesteTidligere": None, "BesteÅr": None, "Deltagelser": 0}
+            result = {"BesteTidligere": None, "BesteÅr": None, "Deltagelser": 0,
+                      "ÅretsTidRegistrert": False}
             self._history_cache[cache_key] = result
             return result
         html = direct_html if direct_html is not None else self._get(profile_url)
@@ -431,6 +466,7 @@ class EqtimingScraper:
         self.session = session or requests.Session()
         self.timeout = timeout
         self.base_url = "https://live.eqtiming.com"
+        self._split_cache: Dict[Tuple[str, str, str], Dict[str, str]] = {}
         headers = getattr(self.session, "headers", None)
         if headers is not None:
             headers.update({"User-Agent": "stoltzen-result-scraper/2026", "Accept": "application/json"})
@@ -460,7 +496,50 @@ class EqtimingScraper:
             return not value or query_key in normalize_name(value)
         results = [row for row in results if in_club(row)]
         starts = [row for row in starts if in_club(row)]
-        return merge_eq_rows(results, starts)
+        merged = merge_eq_rows(results, starts)
+        def load_splits(row: Mapping[str, Any]) -> Tuple[str, Dict[str, str], bool]:
+            uid = str(row["_uid"])
+            url = f"{self.base_url}/api/Result/Contestant/Times/{quote(str(event_id))}/{quote(uid)}"
+            payload = self.fetch_json(url)
+            finished = any(
+                isinstance(item.get("StasjonsOppsett"), Mapping)
+                and item["StasjonsOppsett"].get("Er_stopp")
+                and parse_time(item.get("Formatert")) == row.get("Tid")
+                for item in _rows_from_payload(payload)
+            )
+            return uid, parse_eq_details(payload), finished
+        eligible = {str(row["_uid"]): row for row in results if row.get("_uid")}
+        pending = [row for uid, row in eligible.items()
+                   if not row.get("Tid") or
+                   (str(event_id), uid, str(row["Tid"])) not in self._split_cache]
+        live_details: Dict[str, Dict[str, str]] = {}
+        if pending:
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                futures = {executor.submit(load_splits, row): row for row in pending}
+                for future in as_completed(futures):
+                    row = futures[future]
+                    try:
+                        uid, details, finished = future.result()
+                        live_details[uid] = details
+                        if finished:
+                            self._split_cache[(str(event_id), uid, str(row["Tid"]))] = details
+                    except requests.RequestException as exc:
+                        print(f"EQ Timing split request failed for {row['_uid']}: {exc}", file=sys.stderr)
+        for row in merged:
+            uid = str(row.get("_uid") or "")
+            details = live_details.get(uid) or self._split_cache.get(
+                (str(event_id), uid, str(row.get("Tid") or "")), {}
+            )
+            row.update({field: details.get(field, "") for field in
+                        ("Mellomtider", "Trappetid", "StartenTid", "Maalpassering")})
+            if row.get("Tid") and not row["Maalpassering"]:
+                source = row.get("_raw") or {}
+                station = source.get("StasjonsOppsett") or {}
+                if isinstance(station, Mapping) and station.get("Er_stopp"):
+                    row["Maalpassering"] = str(
+                        source.get("PasseringstidAsDateTime") or source.get("PasseringsTid") or ""
+                    )
+        return merged
 
 
 def build_output_rows(eq_rows: Sequence[Mapping[str, Any]], current_year: int, history: Optional[StoltzenHistory] = None, no_history: bool = False, workers: int = 10) -> List[Dict[str, Any]]:
@@ -486,15 +565,22 @@ def build_output_rows(eq_rows: Sequence[Mapping[str, Any]], current_year: int, h
         previous = histories.get(normalize_name(name), {})
         current = row.get("Tid")
         best = previous.get("BesteTidligere")
+        current_seconds, previous_seconds = time_to_seconds(current), time_to_seconds(best)
+        is_finished = current_seconds is not None and current_seconds > 0
         output.append({
             "Gruppe": row.get("Gruppe") or group_from_class(str(row.get("Klasse") or "")),
             "Navn": name,
             "Tid": current,
+            "Mellomtider": row.get("Mellomtider") or "",
+            "Maalpassering": row.get("Maalpassering") or "",
+            "Trappetid": row.get("Trappetid") or "",
+            "StartenTid": row.get("StartenTid") or "",
             "Klasse": row.get("Klasse") or "",
-            "Deltagelser": previous.get("Deltagelser", 0) + (1 if current else 0),
+            "Deltagelser": previous.get("Deltagelser", 0) + (1 if is_finished and not previous.get("ÅretsTidRegistrert") else 0),
+            "Bestetid": best,
             "BesteTidligere": best,
             "BesteÅr": previous.get("BesteÅr"),
-            "NyBestetid": bool(current and best and time_to_seconds(current) is not None and time_to_seconds(best) is not None and time_to_seconds(current) < time_to_seconds(best)),
+            "NyBestetid": bool(is_finished and previous_seconds is not None and current_seconds < previous_seconds),
             "Differanse": calculate_difference(current, best),
         })
     group_order = {"Dame": 1, "Mann": 2, "Pluss": 3}

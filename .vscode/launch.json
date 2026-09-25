@@ -1,0 +1,34 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Stoltzen: Live-resultater 2026",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "program": "${workspaceFolder}/src/live_results_server.py",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Stoltzen: Installer avhengigheter",
+      "args": [
+        "--event-id",
+        "78640",
+        "--club",
+        "COWI",
+        "--year",
+        "2026",
+        "--output",
+        "results.csv",
+        "--interval",
+        "30",
+        "--port",
+        "8765",
+        "--open-browser"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "justMyCode": true
+    }
+  ]
+}
