@@ -54,4 +54,7 @@ test("diploma page exposes gender and time order controls", () => {
   assert.match(html, /id="sortTime"/);
   assert.match(html, /value="time-asc"/);
   assert.match(html, /value="time-desc"/);
+  assert.match(html, /raceParams\.get\("year"\)/);
+  assert.match(html, /byId\("year"\)\.value=raceYear/);
+  assert.match(html, /resultsLink\.href="results_viewer\.html"\+location\.search/);
 });

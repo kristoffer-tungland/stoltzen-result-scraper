@@ -130,6 +130,7 @@ test("overview renders five-place lists and shows the times behind each best-tim
   const render = vm.runInNewContext(`${script}\nrender`, {
     window: { StoltzenHighlights: { parseCsv, calculate }, setInterval() {} },
     document, fetch: () => new Promise(() => {}), parent: {},
+    URLSearchParams, location: { search: "" },
   });
   const rows = Array.from({ length: 6 }, (_, index) => ({
     navn: `Runner ${index}`, gruppe: "Mann", tid: `${11 + index}:00`,
@@ -162,7 +163,7 @@ test("overview warns when the CSV itself is stale despite a fresh browser fetch"
   };
   vm.runInNewContext(script, {
     window: { StoltzenHighlights: { parseCsv, calculate }, setInterval() {} },
-    document, parent: {},
+    document, parent: {}, URLSearchParams, location: { search: "?year=2025&event=78991" },
     fetch: async () => ({
       ok: true,
       headers: { get: () => new Date(Date.now() - 10 * 60 * 1000).toUTCString() },
@@ -171,4 +172,6 @@ test("overview warns when the CSV itself is stale despite a fresh browser fetch"
   });
   await new Promise(resolve => setImmediate(resolve));
   assert.match(elements.get("status").textContent, /ikke oppdatert siden/);
+  assert.equal(elements.get("overviewYear").textContent, "Løpets øyeblikk · 2025");
+  assert.equal(elements.get("eqSource").href, "https://live.eqtiming.com/78991");
 });

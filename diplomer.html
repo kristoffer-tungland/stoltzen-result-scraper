@@ -51,6 +51,10 @@
 const D=window.StoltzenDiplomas;
 const state={entries:[],selected:new Set(),page:0,hero:"assets/diplom-lopere.jpg",uploadedHero:null};
 const byId=id=>document.getElementById(id);
+const raceParams=new URLSearchParams(location.search),raceYear=raceParams.get("year");
+if(/^20\d{2}$/.test(raceYear||""))byId("year").value=raceYear;
+const resultsLink=document.querySelector('a[href="results_viewer.html"]');
+if(resultsLink)resultsLink.href="results_viewer.html"+location.search;
 function setStatus(message,error=false){const element=byId("status");element.textContent=message;element.classList.toggle("error",error)}
 function visibleEntries(){return D.filterAndSort(state.entries,{gender:byId("filterGender").value,sort:byId("sortTime").value,query:byId("search").value})}
 function selectedEntries(){return visibleEntries().filter(entry=>state.selected.has(entry.id))}

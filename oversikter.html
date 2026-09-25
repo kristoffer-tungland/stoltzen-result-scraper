@@ -9,7 +9,7 @@
 if(window.parent!==window&&new URLSearchParams(location.search).has("embedded")){
   document.documentElement.classList.add("embedded");
 }else{
-  location.replace("results_viewer.html#overview");
+  const target=new URL("results_viewer.html",location.href);target.search=location.search;target.hash="overview";location.replace(target.href);
 }
 </script>
 <style>
@@ -34,7 +34,7 @@ html.embedded .header{display:none}
   </header>
   <div class="livebar"><div id="status" class="status" role="status" aria-live="polite">Henter resultater …</div><div class="actions"><button id="toggleLive" type="button">⏸ Pause live</button><button id="refreshNow" type="button">↻ Oppdater nå</button></div></div>
   <main class="content">
-    <div class="intro"><div><p class="eyebrow">Løpets øyeblikk</p><h2>Hvem utmerker seg?</h2><p>Oversiktene fylles ut etter hvert som passeringer og sluttider registreres. Tallene gjelder den sammenhengende COWI-startrekken.</p></div><div class="counter"><div><strong id="participantCount">0</strong><span>på startlisten</span></div><div><strong id="finishedCount">0</strong><span>i mål</span></div></div></div>
+    <div class="intro"><div><p class="eyebrow" id="overviewYear">Løpets øyeblikk</p><h2>Hvem utmerker seg?</h2><p>Oversiktene fylles ut etter hvert som passeringer og sluttider registreres. Tallene gjelder den sammenhengende COWI-startrekken.</p></div><div class="counter"><div><strong id="participantCount">0</strong><span>på startlisten</span></div><div><strong id="finishedCount">0</strong><span>i mål</span></div></div></div>
     <section class="features" aria-label="Topp fem-statistikker">
       <article class="feature"><h3>Først i mål</h3><ol id="firstFinish" class="rank-list"></ol></article>
       <article class="feature"><h3>Raskest opp trappene</h3><ol id="fastestStairs" class="rank-list"></ol><p class="method">Strekktid fra Halvveis til Trappene.</p></article>
@@ -45,12 +45,16 @@ html.embedded .header{display:none}
       <article class="feature"><h3>Topp fem kvinner</h3><ol id="topWomen" class="rank-list"></ol></article>
       <article class="feature"><h3>Hvem startet for hardt?</h3><ol id="hardStarters" class="rank-list"></ol><p class="method">Indikasjon: Første del sammenlignes med resten av løypa mot gruppens median. Minst fem fullførte i samme gruppe og minst 10 % relativ forskjell kreves.</p></article>
     </section>
-    <p class="sources">Årets tider: <a href="https://live.eqtiming.com/78640" target="_blank" rel="noopener">EQ Timing</a>. Tidligere bestetider: Stoltzen-statistikken.</p>
+    <p class="sources">Årets tider: <a id="eqSource" href="https://live.eqtiming.com/78640" target="_blank" rel="noopener">EQ Timing</a>. Tidligere bestetider: Stoltzen-statistikken.</p>
   </main>
 </div>
 <script src="highlights.js?v=2"></script>
 <script>
 const H = window.StoltzenHighlights;
+const raceParams=new URLSearchParams(location.search);
+const raceYear=raceParams.get("year"),raceEvent=raceParams.get("event");
+if(/^20\d{2}$/.test(raceYear||""))text("overviewYear","Løpets øyeblikk · "+raceYear);
+if(/^\d+$/.test(raceEvent||""))document.getElementById("eqSource").href="https://live.eqtiming.com/"+raceEvent;
 let autoRefresh = true, refreshing = false, lastUpdate = "";
 const intervalMs = 30000;
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}

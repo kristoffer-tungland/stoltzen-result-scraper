@@ -41,17 +41,21 @@ test("scene and overview switch without navigating away from fullscreen document
   const setViewMode = vm.runInNewContext(source.replace(/\nasync function toggleFullscreen$/, "") + "; setViewMode", context);
 
   setViewMode("overview");
-  assert.equal(frameSource, "oversikter.html?embedded=1&v=2");
+  assert.equal(frameSource, "oversikter.html?embedded=1&v=3");
   assert.deepEqual([...active], ["overview"]);
   setViewMode("scene");
   assert.equal(frameSource, "");
   assert.deepEqual([...active], ["scene"]);
   assert.equal(context.document.fullscreenElement, fullscreenElement);
   assert.equal(navigations, 0);
+
+  context.location.href = "http://localhost/results_viewer.html?year=2025&event=78991#scene";
+  setViewMode("overview");
+  assert.equal(frameSource, "oversikter.html?embedded=1&v=3&year=2025&event=78991");
 });
 
 test("direct overview URL enters the shared viewer", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "oversikter.html"), "utf8");
-  assert.match(html, /location\.replace\("results_viewer\.html#overview"\)/);
+  assert.match(html, /target\.search=location\.search;target\.hash="overview"/);
   assert.match(html, /html\.embedded \.header\{display:none\}/);
 });

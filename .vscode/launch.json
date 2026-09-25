@@ -29,6 +29,35 @@
         "PYTHONUNBUFFERED": "1"
       },
       "justMyCode": true
+    },
+    {
+      "name": "Stoltzen: Resultater 2025",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "program": "${workspaceFolder}/src/live_results_server.py",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Stoltzen: Installer avhengigheter",
+      "args": [
+        "--event-id",
+        "78991",
+        "--club",
+        "COWI",
+        "--year",
+        "2025",
+        "--output",
+        "results_2025.csv",
+        "--interval",
+        "30",
+        "--port",
+        "8765",
+        "--open-browser"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "justMyCode": true
     }
   ]
 }

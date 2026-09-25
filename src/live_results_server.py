@@ -13,6 +13,7 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Sequence
+from urllib.parse import urlencode, urlsplit
 
 from eqtiming_scraper import (
     DEFAULT_CLUB,
@@ -34,6 +35,26 @@ def historical_result_urls(club: str, year: int) -> Sequence[str]:
         f"http://www.stoltzen.no/resultater/{year - 1}/resklubb_16.html",
         f"http://www.stoltzen.no/resultater/{year - 2}/resklubb_16.html",
     )
+
+
+def make_viewer_url(port: int, output: Path, project_root: Path,
+                    year: int, event_id: str) -> str:
+    output.resolve().relative_to(project_root.resolve())
+    query = urlencode({"year": year, "event": event_id})
+    return f"http://127.0.0.1:{port}/results_viewer.html?{query}"
+
+
+class ResultFileHandler(SimpleHTTPRequestHandler):
+    """Serve the active year's CSV at the viewer's stable results.csv URL."""
+
+    def __init__(self, *args, result_path: Path, **kwargs):
+        self.result_path = result_path
+        super().__init__(*args, **kwargs)
+
+    def translate_path(self, path: str) -> str:
+        if urlsplit(path).path == "/results.csv":
+            return str(self.result_path)
+        return super().translate_path(path)
 
 
 class LiveUpdater:
@@ -108,6 +129,10 @@ def main() -> int:
     output = Path(args.output)
     if not output.is_absolute():
         output = project_root / output
+    try:
+        viewer_url = make_viewer_url(args.port, output, project_root, args.year, args.event_id)
+    except ValueError:
+        parser.error("--output must be inside the project directory for live viewing")
 
     updater = LiveUpdater(
         args.event_id,
@@ -126,11 +151,10 @@ def main() -> int:
 
     server = ThreadingHTTPServer(
         ("127.0.0.1", args.port),
-        partial(SimpleHTTPRequestHandler, directory=str(project_root)),
+        partial(ResultFileHandler, directory=str(project_root), result_path=output),
     )
     update_thread = threading.Thread(target=updater.run, daemon=True)
     update_thread.start()
-    viewer_url = f"http://127.0.0.1:{args.port}/results_viewer.html"
     print(f"Skrev {count} deltakere. Live-visning: {viewer_url}", flush=True)
     print(f"Oppdaterer hvert {args.interval}. sekund. Trykk Ctrl+C for å stoppe.", flush=True)
     if args.open_browser:

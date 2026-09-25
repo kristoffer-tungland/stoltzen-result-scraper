@@ -34,12 +34,20 @@ python -m pip install -r src/requirements.txt
 
 ## Bruk
 
-### EQ Timing 2026 (anbefalt)
+### EQ Timing 2025 og 2026
 
 I VS Code kan live-visningen startes direkte med `F5`. Profilen
 `Stoltzen: Live-resultater 2026` oppretter automatisk et prosjektmiljø i `.venv`,
 installerer avhengighetene, starter serveren, oppdaterer data hvert 30. sekund og
 åpner nettsiden automatisk. Stopp med `Shift+F5`.
+
+For å se 2025 velger du `Stoltzen: Resultater 2025` i nedtrekkslisten under
+**Run and Debug** og trykker `F5`. Den bruker EQ Timing-arrangement `78991`,
+løpsår 2025 og skriver til `results_2025.csv`. 2026-profilen skriver fortsatt til
+`results.csv`, så årgangene overskriver ikke hverandre. Stopp den aktive profilen
+med `Shift+F5` før du starter den andre; begge bruker lokal port 8765. Serveren
+viser valgt års fil som `results.csv` for nettsiden, og sender riktig år videre
+til oversikter og diplomer.
 
 Kjør den nye standardflyten fra prosjektmappen:
 
